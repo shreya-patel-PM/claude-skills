@@ -155,7 +155,9 @@ REFERENCE STORY (gold standard):
 GENERATED STORY (to evaluate):
 {json.dumps(generated, indent=2)}
 
-Score the GENERATED story against the REFERENCE on each of the 5 dimensions."""
+Score the GENERATED story against the REFERENCE on each of the 5 dimensions.
+
+Respond with ONLY the JSON object. No markdown fences, no preamble, no commentary."""
 
     client = anthropic.Anthropic()
     response = client.messages.create(
@@ -165,13 +167,18 @@ Score the GENERATED story against the REFERENCE on each of the 5 dimensions."""
         system=rubric_prompt,
         messages=[
             {"role": "user", "content": user_msg},
-            {"role": "assistant", "content": "{"},
         ],
     )
-    raw = "{" + response.content[0].text
-    raw = raw.strip()
+    raw = response.content[0].text.strip()
+    # Strip markdown fences if present
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
     if raw.endswith("```"):
-        raw = raw[: raw.rfind("```")].strip()
+        raw = raw[:raw.rfind("```")].strip()
+    # Find the JSON object
+    start, end = raw.find("{"), raw.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        raw = raw[start:end + 1]
     return json.loads(raw)
 
 
