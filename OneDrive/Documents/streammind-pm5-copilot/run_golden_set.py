@@ -39,10 +39,13 @@ from validate import parse_story, validate_story, render_markdown, strip_fences
 ROOT = Path(__file__).parent
 GOLDEN_PATH = ROOT / "evals" / "golden_asks.json"
 RESULTS_DIR = ROOT / "evals" / "results"
+SINGLE_DIR = ROOT / "evals" / "results_single"
 SUMMARY_PATH = ROOT / "evals" / "eval_summary.csv"
+ABLATION_PATH = ROOT / "evals" / "ablation_summary.csv"
 
 HAIKU = "anthropic/claude-haiku-4-5"
 SONNET = "anthropic/claude-sonnet-4-6"
+SONNET_DIRECT = "claude-sonnet-4-6"  # for direct anthropic SDK calls
 
 
 def load_golden(ids=None):
@@ -117,6 +120,64 @@ def run_crew_mock(ask, corpus):
     }
 
 
+def run_single_call(ask, corpus):
+    """Single Sonnet call — no crew, no Researcher/Analyst. The ablation baseline."""
+    import anthropic
+
+    system = (
+        "You are a senior Product Manager. Given a rough feature ask and product "
+        "context, write a developer-ready user story with acceptance criteria.\n\n"
+        "Output ONLY valid JSON. No markdown fences, no preamble.\n\n"
+        "JSON SCHEMA:\n"
+        '{\n'
+        '  "title": "[Feature Name] – [Story Name]",\n'
+        '  "story": "As a [specific role], I want [one action], so that [outcome].",\n'
+        '  "acs": [\n'
+        '    {\n'
+        '      "id": "AC1",\n'
+        '      "name": "Short Descriptive Name",\n'
+        '      "given": "[role] [precondition]",\n'
+        '      "when": "[single triggering action]",\n'
+        '      "thens": ["Observable outcome in future tense."]\n'
+        '    }\n'
+        '  ],\n'
+        '  "assumptions_carried": ["A1 — ..."]\n'
+        '}\n\n'
+        "RULES:\n"
+        "- AC prefix for happy path, ACE for edge cases, numbered sequentially.\n"
+        "- Every GIVEN names a specific role. Every WHEN is one action.\n"
+        "- Every THEN bullet is future tense.\n"
+        "- Keep scope narrow — the smallest slice that satisfies the ask.\n"
+        "- Flag assumptions as A1, A2, ... rather than inventing product detail.\n"
+        "- If the ask names multiple features, pick ONE and note the rest as assumptions."
+    )
+
+    user_msg = (
+        f'Feature ask: "{ask}"\n\n'
+        f"Product context:\n{corpus}\n\n"
+        "Write the user story as JSON."
+    )
+
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model=SONNET_DIRECT,
+        max_tokens=4000,
+        temperature=0.3,
+        system=system,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    raw = response.content[0].text.strip()
+    usage = response.usage
+
+    return {
+        "researcher": "(single-call mode — no Researcher)",
+        "analyst": "(single-call mode — no Analyst)",
+        "writer_raw": raw,
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+    }
+
+
 def score_story(ask, reference, generated, model="claude-sonnet-4-6"):
     """Score using the rubric judge. Returns dict of dimension scores."""
     import anthropic
@@ -182,36 +243,47 @@ Respond with ONLY the JSON object. No markdown fences, no preamble, no commentar
     return json.loads(raw)
 
 
-def run_batch(entries, mock=False):
-    """Run the crew on each entry and save outputs."""
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+def run_batch(entries, mock=False, single=False, output_dir=None):
+    """Run the crew (or single call) on each entry and save outputs."""
+    out_dir = output_dir or (SINGLE_DIR if single else RESULTS_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
     corpus = (ROOT / "product_context.md").read_text("utf-8")
-    run_fn = run_crew_mock if mock else run_crew_live
+
+    if mock:
+        run_fn = run_crew_mock
+        label = "mock"
+    elif single:
+        run_fn = run_single_call
+        label = "single-call"
+    else:
+        run_fn = run_crew_live
+        label = "crew"
 
     for i, entry in enumerate(entries):
         eid = entry["id"]
-        result_path = RESULTS_DIR / f"{eid}.json"
+        result_path = out_dir / f"{eid}.json"
 
         if result_path.exists():
-            print(f"  [{i+1}/{len(entries)}] {eid} — already exists, skipping crew run")
+            print(f"  [{i+1}/{len(entries)}] {eid} — already exists, skipping")
             continue
 
-        print(f"  [{i+1}/{len(entries)}] {eid} — running {'mock' if mock else 'live'} crew...")
+        print(f"  [{i+1}/{len(entries)}] {eid} — running {label}...")
         t0 = time.time()
 
         try:
             outputs = run_fn(entry["ask"], corpus)
             story = parse_story(outputs["writer_raw"])
             errors, warnings = validate_story(story)
+            duration = round(time.time() - t0, 1)
 
             result = {
                 "id": eid,
                 "ask": entry["ask"],
                 "category": entry["category"],
                 "difficulty": entry["difficulty"],
-                "mode": "mock" if mock else "live",
+                "mode": label,
                 "ts": datetime.now(timezone.utc).isoformat(),
-                "duration_s": round(time.time() - t0, 1),
+                "duration_s": duration,
                 "story": story,
                 "validation": {
                     "errors": errors,
@@ -221,9 +293,13 @@ def run_batch(entries, mock=False):
                 "researcher_brief": outputs["researcher"][:500],
                 "analyst_spec": outputs["analyst"][:500],
             }
+            if "input_tokens" in outputs:
+                result["input_tokens"] = outputs["input_tokens"]
+                result["output_tokens"] = outputs["output_tokens"]
+
             result_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
             status = "✓" if not errors else f"✗ {len(errors)} errors"
-            print(f"           {status} · {len(warnings)} warnings · {result['duration_s']}s")
+            print(f"           {status} · {len(warnings)} warnings · {duration}s")
 
         except Exception as e:
             print(f"           ✗ FAILED: {e}")
@@ -236,18 +312,21 @@ def run_batch(entries, mock=False):
             result_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
 
-def score_batch(entries):
+def score_batch(entries, results_dir=None, label=""):
     """Score all existing results against their golden references."""
+    rdir = results_dir or RESULTS_DIR
     DIMS = ["clarity", "testability", "scope_fidelity", "completeness", "grounding"]
     rows = []
 
+    if label:
+        print(f"\n── {label} ──")
     print(f"\n{'ID':<6} {'Cat':<20} {'Diff':<8} ", end="")
     print(f"{'Clar':>4} {'Test':>4} {'Scop':>4} {'Comp':>4} {'Grnd':>4} {'Avg':>5}")
     print("─" * 72)
 
     for entry in entries:
         eid = entry["id"]
-        result_path = RESULTS_DIR / f"{eid}.json"
+        result_path = rdir / f"{eid}.json"
 
         if not result_path.exists():
             print(f"{eid:<6} — no result file, skipping")
@@ -320,16 +399,137 @@ def score_batch(entries):
     return rows
 
 
+def ablation_compare(entries):
+    """Compare crew vs single-call results side by side."""
+    DIMS = ["clarity", "testability", "scope_fidelity", "completeness", "grounding"]
+    rows = []
+
+    print("\n" + "=" * 80)
+    print("ABLATION: Crew (3 calls) vs Single Call (1 call)")
+    print("=" * 80)
+    print(f"\n{'ID':<6} {'Cat':<18}  {'Crew':>5} {'Singl':>5}  {'Δ':>5}  {'Crew$':>8} {'Singl$':>8}  {'CrewT':>6} {'SnglT':>6}")
+    print("─" * 80)
+
+    crew_avgs, single_avgs = [], []
+    crew_times, single_times = [], []
+
+    for entry in entries:
+        eid = entry["id"]
+        crew_path = RESULTS_DIR / f"{eid}.json"
+        single_path = SINGLE_DIR / f"{eid}.json"
+
+        if not crew_path.exists() or not single_path.exists():
+            continue
+
+        crew_r = json.loads(crew_path.read_text("utf-8"))
+        single_r = json.loads(single_path.read_text("utf-8"))
+
+        if "rubric_avg" not in crew_r or "rubric_avg" not in single_r:
+            continue
+
+        c_avg = crew_r["rubric_avg"]
+        s_avg = single_r["rubric_avg"]
+        delta = round(c_avg - s_avg, 2)
+        c_time = crew_r.get("duration_s", 0)
+        s_time = single_r.get("duration_s", 0)
+
+        # Estimate costs
+        c_cost = "$0.015"  # ~$0.013-0.023 per ARCHITECTURE.md
+        s_tokens_in = single_r.get("input_tokens", 0)
+        s_tokens_out = single_r.get("output_tokens", 0)
+        s_cost_val = (s_tokens_in * 3 / 1_000_000) + (s_tokens_out * 15 / 1_000_000)
+        s_cost = f"${s_cost_val:.3f}" if s_tokens_in else "—"
+
+        crew_avgs.append(c_avg)
+        single_avgs.append(s_avg)
+        crew_times.append(c_time)
+        single_times.append(s_time)
+
+        sign = "+" if delta > 0 else "" if delta == 0 else ""
+        print(f"{eid:<6} {entry['category']:<18}  {c_avg:>5.1f} {s_avg:>5.1f}  {sign}{delta:>+5.2f}"
+              f"  {c_cost:>8} {s_cost:>8}  {c_time:>5.1f}s {s_time:>5.1f}s")
+
+        row = {
+            "id": eid, "category": entry["category"],
+            "crew_avg": c_avg, "single_avg": s_avg, "delta": delta,
+            "crew_time": c_time, "single_time": s_time,
+        }
+        # Per-dimension comparison
+        if "rubric_scores" in crew_r and "rubric_scores" in single_r:
+            for d in DIMS:
+                row[f"crew_{d}"] = crew_r["rubric_scores"][d]["score"]
+                row[f"single_{d}"] = single_r["rubric_scores"][d]["score"]
+        rows.append(row)
+
+    if crew_avgs and single_avgs:
+        c_mean = round(sum(crew_avgs) / len(crew_avgs), 2)
+        s_mean = round(sum(single_avgs) / len(single_avgs), 2)
+        c_t_mean = round(sum(crew_times) / len(crew_times), 1)
+        s_t_mean = round(sum(single_times) / len(single_times), 1)
+
+        print("─" * 80)
+        print(f"{'MEAN':<26} {c_mean:>5.1f} {s_mean:>5.1f}  {c_mean - s_mean:>+5.2f}"
+              f"{'':>18} {c_t_mean:>5.1f}s {s_t_mean:>5.1f}s")
+
+        print(f"\n  Crew wins:   {sum(1 for c,s in zip(crew_avgs, single_avgs) if c > s)}")
+        print(f"  Single wins: {sum(1 for c,s in zip(crew_avgs, single_avgs) if s > c)}")
+        print(f"  Ties:        {sum(1 for c,s in zip(crew_avgs, single_avgs) if c == s)}")
+        print(f"  Speed ratio: single is {c_t_mean / s_t_mean:.1f}× faster" if s_t_mean > 0 else "")
+
+        # Per-dimension comparison
+        if rows and f"crew_{DIMS[0]}" in rows[0]:
+            print(f"\n  Per-dimension means:")
+            for d in DIMS:
+                c_d = round(sum(r.get(f"crew_{d}", 0) for r in rows) / len(rows), 2)
+                s_d = round(sum(r.get(f"single_{d}", 0) for r in rows) / len(rows), 2)
+                marker = "← crew" if c_d > s_d else "← single" if s_d > c_d else "= tie"
+                print(f"    {d:<18} crew {c_d:.1f}  single {s_d:.1f}  Δ{c_d-s_d:>+.1f}  {marker}")
+
+        # Write CSV
+        if rows:
+            fieldnames = list(rows[0].keys())
+            with open(ABLATION_PATH, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+            print(f"\n  Ablation summary written to {ABLATION_PATH}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="PM Copilot golden set batch runner")
     ap.add_argument("--mock", action="store_true", help="Mock crew runs (no API calls for crew)")
     ap.add_argument("--score-only", action="store_true", help="Skip crew runs, score existing results")
     ap.add_argument("--ids", nargs="+", help="Run specific entries only (e.g. G01 G05)")
     ap.add_argument("--no-score", action="store_true", help="Run crew only, skip scoring")
+    ap.add_argument("--single", action="store_true", help="Run single-call mode (no crew)")
+    ap.add_argument("--ablation", action="store_true",
+                    help="Run single-call on all asks, score, then compare with existing crew results")
     args = ap.parse_args()
 
     entries = load_golden(args.ids)
     print(f"PM Copilot golden set — {len(entries)} asks\n")
+
+    if args.ablation:
+        # Phase 1: run single-call
+        print("Phase 1: Running SINGLE-CALL on each ask...")
+        run_batch(entries, single=True, output_dir=SINGLE_DIR)
+        # Phase 2: score single-call results
+        print("\nPhase 2: Scoring single-call results...")
+        score_batch(entries, results_dir=SINGLE_DIR, label="SINGLE-CALL SCORES")
+        # Phase 3: compare
+        print("\nPhase 3: Comparing crew vs single-call...")
+        ablation_compare(entries)
+        return
+
+    if args.single:
+        out_dir = SINGLE_DIR
+        if not args.score_only:
+            print("Phase 1: Running SINGLE-CALL on each ask...")
+            run_batch(entries, single=True, output_dir=out_dir)
+        if not args.no_score:
+            print("\nPhase 2: Scoring single-call results...")
+            score_batch(entries, results_dir=out_dir, label="SINGLE-CALL SCORES")
+        return
 
     if not args.score_only:
         print("Phase 1: Running crew on each ask...")
