@@ -1,0 +1,165 @@
+{
+  "id": "G01",
+  "ask": "Users keep missing when their saved jobs get reposted. We should notify them somehow.",
+  "category": "grounded",
+  "difficulty": "easy",
+  "mode": "live",
+  "ts": "2026-07-18T16:58:25.088028+00:00",
+  "duration_s": 53.7,
+  "story": {
+    "title": "Repost Notification for Saved Jobs \u2013 Email Alert on Repost Detection",
+    "story": "As a job seeker with saved jobs, I want to receive an email notification when a job I saved gets reposted, so that I can act on the renewed opportunity before it closes again.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Repost Status Field Added to Saved Jobs",
+        "given": "a job seeker with at least one entry in the `saved_jobs` table",
+        "when": "the daily batch ingest runs and processes the repost-frequency feature view",
+        "thens": [
+          "The `saved_jobs` table will contain a `repost_status` field (or equivalent) for each saved posting.",
+          "The `repost_status` field will be updated to reflect whether the posting has been reposted since the user saved it."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Repost Detected for a Saved Job",
+        "given": "a job seeker who has saved a job identified by a specific `posting_id`",
+        "when": "the daily batch ingest detects that the saved `posting_id` has been reposted in the repost-frequency feature view",
+        "thens": [
+          "The `repost_status` field for that `saved_jobs` row will be updated to indicate a repost has been detected.",
+          "The notification pipeline will queue exactly one email notification for that repost event."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Email Notification Sent via Resend",
+        "given": "a job seeker whose saved job has a queued repost notification",
+        "when": "the notification pipeline processes the queued repost event",
+        "thens": [
+          "Exactly one email will be sent to the job seeker's address on file via the Resend integration.",
+          "The email will include the job title, posting URL, and detected repost date sourced from the posting schema.",
+          "The email will frame the repost as a signal rather than a certainty, using calm-design language consistent with GUARDRAILS.md.",
+          "The email will include a caveat that the job may no longer be available at the time of reading.",
+          "No more than one notification email will be sent per saved job repost event, regardless of how many times the job has been reposted."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "No Duplicate Notifications for Duplicate Saved Rows",
+        "given": "a job seeker who has saved the same `posting_id` in multiple separate rows in `saved_jobs`",
+        "when": "the daily batch ingest detects a repost for that `posting_id`",
+        "thens": [
+          "Exactly one email notification will be sent to the job seeker for that repost event.",
+          "Additional rows sharing the same `posting_id` will not trigger additional notification emails."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "No Retroactive Notifications at Launch",
+        "given": "a job seeker whose saved job was reposted before this feature launched",
+        "when": "the feature is deployed and the first batch ingest runs",
+        "thens": [
+          "No notification email will be sent for repost events that occurred prior to the feature launch date.",
+          "Only repost events detected on or after the feature launch date will trigger notifications."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Saved Job Deleted Before Notification Sends",
+        "given": "a job seeker whose saved job has a queued repost notification",
+        "when": "the job seeker deletes that saved job before the notification pipeline processes the queued event",
+        "thens": [
+          "The notification email will not be sent.",
+          "The suppressed notification event will be logged for observability purposes."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Resend Delivery Failure",
+        "given": "a job seeker whose saved job has a queued repost notification",
+        "when": "the Resend API call fails during notification delivery",
+        "thens": [
+          "The failed notification attempt will be logged with sufficient detail to identify the affected user and posting.",
+          "No retry will be attempted for the failed notification.",
+          "No duplicate notification will be sent as a result of the failure."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Repost Detected but Job Is No Longer Available",
+        "given": "a job seeker whose saved job has been reposted and then immediately closed or removed",
+        "when": "the notification pipeline sends the repost email",
+        "thens": [
+          "The email will be sent and will include a caveat that the job may no longer be available at the time of reading.",
+          "The email will not assert the job is currently open or accepting applications."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Batch Ingest Runs but Repost-Frequency Feature View Does Not Update",
+        "given": "the notification pipeline awaiting an updated repost-frequency feature view",
+        "when": "the daily batch ingest completes without updating the repost-frequency feature view",
+        "thens": [
+          "No repost notifications will be queued or sent for that batch cycle.",
+          "The failure will be surfaced to existing data pipeline monitoring per current infrastructure.",
+          "No new alerting mechanism will be triggered by this feature specifically."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "User Email Address Missing or Invalid",
+        "given": "a job seeker whose `saved_jobs` entry has a detected repost but whose user profile has a missing or invalid email address",
+        "when": "the notification pipeline attempts to send the repost email",
+        "thens": [
+          "The notification email will not be sent.",
+          "The failed attempt will be logged, identifying the affected user and the missing or invalid email condition.",
+          "No fallback delivery method will be attempted."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 User notification preferences and opt-out controls are not required for launch; all users who save jobs will receive repost notifications by default",
+      "A2 \u2014 Each distinct repost event (as detected by the daily batch) triggers exactly one notification; if a job reposts multiple times in a single day, behavior is undefined",
+      "A3 \u2014 If a user deletes a saved job after a repost is detected but before the notification is sent, the notification is suppressed (not sent)",
+      "A4 \u2014 No retry or escalation mechanism exists if Resend delivery fails; failed notifications are logged but not re-attempted",
+      "A5 \u2014 If a user has saved the same `posting_id` multiple times (separate rows in `saved_jobs`), only one notification is sent per repost event, not one per saved row",
+      "A6 \u2014 Notification messaging will include a caveat that the job may no longer be available, per calm-design principles",
+      "A7 \u2014 Batch ingest and feature view update failures are handled by existing data pipeline monitoring; no new alerting is in scope",
+      "A8 \u2014 All users have a valid, verified email address on file; no fallback for missing or invalid email is defined",
+      "A9 \u2014 Job posting metadata (title, URL, repost date) is available in the posting schema and can be joined to the repost-frequency feature view"
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC1: WHEN contains 'and' \u2014 likely two ACs.",
+      "AC5: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF\n\n\u2022 **Saved jobs are already tracked with metadata.** The `saved_jobs` table stores `posting_id` and `saved_at`, and the History page surfaces saved items. However, there is no status field to mark whether a saved job has been reposted, which would be needed to trigger or track notifications. ([C1])\n\n\u2022 **Repost detection is technically feasible but has latency constraints.** Repost events are detectable via the repost-frequency feature view at daily batch ingest, meaning notificat",
+  "analyst_spec": "# SCOPED SPEC: Repost Notification for Saved Jobs\n\n## IN SCOPE\n\n- Detect when a saved job (identified by `posting_id`) has been reposted via the daily batch repost-frequency feature view\n- Add a `repost_status` field (or equivalent) to the `saved_jobs` table to track whether a posting has been reposted since the user saved it\n- Build email notification infrastructure integration with Resend to send a single notification per repost event to the user who saved the job\n- Compose notification messag",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story has a clear persona ('job seeker with saved jobs'), single-action 'I want', and plain language. The title is slightly verbose but unambiguous. Minor gap: the persona qualifier 'with saved jobs' is slightly redundant but not harmful. Overall very readable and well-structured."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are thoroughly covered (delivery failure, missing email, duplicate rows, retroactive notifications, feature view failure). The generated story actually exceeds the reference in edge case coverage with ACE2 (Resend failure), ACE4 (feature view not updating), ACE5 (missing email), and AC5 (no retroactive notifications). Each condition is specific and testable."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story introduces significant implementation detail not present in the reference: specific table names (`saved_jobs`, `repost_status` field), specific integration names (Resend), reference to internal documents (GUARDRAILS.md), and data pipeline specifics (repost-frequency feature view). AC1 and AC2 describe data model changes rather than user-facing behavior. This is invented scope that goes beyond the original ask and the reference story's level of abstraction. The reference stays at product behavior level; the generated story dips into technical implementation."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story is exceptionally complete with 10 ACs covering happy path, duplicates, retroactive events, delivery failures, missing emails, and pipeline failures. Assumptions are well-documented with 9 flagged items covering channel choice, opt-out, retry behavior, deduplication, and data availability. This exceeds the reference's coverage meaningfully, though some of the completeness comes at the cost of scope fidelity."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Most claims are tied to context with assumptions flagged using A1-A9 prefixes. The story references specific technical components (Resend, GUARDRAILS.md, repost-frequency feature view) which appear to be grounded in actual project context rather than invented. However, some assumptions like A2 (undefined behavior for multiple reposts in one day) and A8 (all users have valid email) should arguably be flagged as PLACEHOLDER or more explicitly uncertain. The daily cap concept from the reference is absent and not flagged as a deliberate omission."
+    }
+  },
+  "rubric_avg": 4.2
+}

@@ -1,0 +1,114 @@
+{
+  "id": "G13",
+  "ask": "The Analyze page should show when the posting was first seen.",
+  "category": "grounded",
+  "difficulty": "easy",
+  "mode": "live",
+  "ts": "2026-07-18T17:07:52.599229+00:00",
+  "duration_s": 37.2,
+  "story": {
+    "title": "Analyze Page \u2013 Show Posting First-Seen Timestamp",
+    "story": "As a job seeker reviewing a posting on the Analyze page, I want to see when the posting was first seen, so that I can assess how long the posting has been active when evaluating the ghost-score verdict.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "First-Seen Timestamp Displayed in Evidence Panel",
+        "given": "a job seeker is on the Analyze page for a posting that has a valid `saved_at` timestamp in the `saved_jobs` table",
+        "when": "the Analyze page finishes loading",
+        "thens": [
+          "The evidence panel will display a field labelled \"First seen:\" followed by a human-readable date/time value.",
+          "The timestamp value will be sourced from the earliest `saved_at` entry for that posting per A1.",
+          "The \"First seen:\" field will appear inside the existing evidence panel component and not in a separate UI surface per A2."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Timestamp Format Is Human-Readable",
+        "given": "a job seeker is on the Analyze page for a posting that has a valid `saved_at` timestamp",
+        "when": "the evidence panel renders the \"First seen:\" field",
+        "thens": [
+          "The date/time value will be formatted in a human-readable style (e.g., \"Jan 15, 2025 at 3:42 PM\") rather than a raw ISO string or Unix epoch.",
+          "The timezone display will follow the [timezone format to be confirmed \u2014 UTC, user local, or source timezone per open assumption]."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "No Saved Record Found for Posting",
+        "given": "a job seeker is on the Analyze page for a posting that exists in repost-detection logic but has no corresponding `saved_at` entry in `saved_jobs`",
+        "when": "the Analyze page finishes loading",
+        "thens": [
+          "The evidence panel will display the \"First seen:\" field with a fallback value of [\"Unknown\" / omitted field / ingest timestamp \u2014 behavior to be confirmed per A6].",
+          "No unhandled error or blank panel will be shown to the job seeker."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Posting Predates Repost-Detection Feature",
+        "given": "a job seeker is on the Analyze page for a posting whose earliest available timestamp predates the repost-detection feature rollout",
+        "when": "the Analyze page finishes loading",
+        "thens": [
+          "The evidence panel will display the \"First seen:\" field with either the earliest available timestamp or a [\"Unavailable\" indicator \u2014 behavior to be confirmed per A6].",
+          "No unhandled error or blank panel will be shown to the job seeker."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Multiple Saves of Same Posting by Same User",
+        "given": "a job seeker is on the Analyze page for a posting they have saved more than once, resulting in multiple `saved_at` entries",
+        "when": "the Analyze page finishes loading",
+        "thens": [
+          "The evidence panel will display the \"First seen:\" field using the [earliest / most recent \u2014 behavior to be confirmed] `saved_at` value across all saves for that posting.",
+          "Only one \"First seen:\" value will be rendered in the evidence panel."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "API or Database Failure Fetching Timestamp",
+        "given": "a job seeker is on the Analyze page for any posting",
+        "when": "the data fetch for the `saved_at` timestamp fails due to a network or database error",
+        "thens": [
+          "The evidence panel will still render without the \"First seen:\" field or will display a graceful fallback (e.g., \"First seen: Unavailable\") rather than crashing or showing an unhandled error state.",
+          "The rest of the evidence panel content, including the ghost-score verdict, will remain visible and unaffected."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 \"First seen\" means the earliest `saved_at` timestamp for a posting, not the earliest ingest or crawl timestamp across all sources",
+      "A2 \u2014 The evidence panel is the correct UI location for this timestamp (not a separate metadata card or header field)",
+      "A3 \u2014 24-hour latency is acceptable for the \"first seen\" signal and does not require a separate real-time detection mechanism",
+      "A4 \u2014 The Analyze page currently has an evidence panel component ready to accept additional fields; no panel redesign is required",
+      "A5 \u2014 No user-facing explanation of the 24-hour batch latency is required unless explicitly mandated by guardrails",
+      "A6 \u2014 Historical postings without a `saved_at` value should be handled gracefully (behavior TBD with PM)"
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: \"Show when posting was first seen\" on Analyze page\n\n- **Posting timestamps exist in schema but not yet surfaced on Analyze.** The `saved_jobs` table stores `saved_at` (when *user* saved), and repost-detection logic in `sql/features.sql` computes posting age as a deterministic signal for ghost-score classification. However, the Analyze page currently shows only the ghost-score verdict, not the underlying posting metadata. ([C2], [C1])\n\n- **Repost detection has 24-hour latency.** ",
+  "analyst_spec": "# SCOPED SPEC: \"Show when posting was first seen\" on Analyze page\n\n## IN SCOPE\n- Display the posting's first-seen timestamp on the Analyze page within the evidence panel\n- Source the timestamp from existing `saved_jobs.saved_at` or repost-detection logic in `sql/features.sql`\n- Show the timestamp in human-readable format (e.g., \"First seen: [date/time]\")\n- Acknowledge 24-hour latency in repost detection in the UI or tooltip if needed\n\n## OUT OF SCOPE\n- Surfacing other posting metadata (title, UR",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story has a clear persona (job seeker), single-action intent, and named UI surface. The 'so that' clause adds useful context about ghost-score evaluation. Minor verbosity in the story sentence but no ambiguity. Slightly more complex than the reference but still clear."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases are well-covered (no record, predates feature, multiple saves, API failure). Some THENs contain bracketed placeholders indicating unresolved behavior (timezone, fallback value), which slightly reduces testability since testers cannot verify against a definitive expected outcome. The reference's relative-label format with hover absolute date is not specified here."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story stays within the core ask but introduces several implementation-specific details not in the original ask or reference (saved_jobs table, saved_at column, 24-hour batch latency, ghost-score connection). ACE3 (multiple saves) and ACE4 (API failure) go beyond what the reference covers, adding scope. The reference's relative date format ('23 days ago') with hover tooltip is replaced by an absolute timestamp format, which is a meaningful scope deviation from the gold standard."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story is more complete than the reference, covering 4 edge cases vs. 1 in the reference, surfacing 6 explicit assumptions, and addressing error states, data source ambiguity, and historical data gaps. All dependencies are flagged. The AC count (5 ACs + 6 assumptions) is thorough without being excessive."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Claims are tied to specific context (saved_jobs table, saved_at column, evidence panel, ghost-score). Assumptions are properly prefixed A1-A6. Unresolved behaviors are flagged with PLACEHOLDER-style brackets. One concern: the reference assumption (A1) notes posting age data from features.sql, but the generated story grounds to saved_jobs/saved_at without flagging this as a potential discrepancy. Otherwise grounding is strong."
+    }
+  },
+  "rubric_avg": 4.0
+}

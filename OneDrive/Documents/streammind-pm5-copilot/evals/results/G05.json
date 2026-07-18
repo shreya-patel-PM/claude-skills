@@ -1,0 +1,188 @@
+{
+  "id": "G05",
+  "ask": "We need a way for users to dispute a ghost score they think is wrong.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T17:01:43.371134+00:00",
+  "duration_s": 54.3,
+  "story": {
+    "title": "Ghost Score Dispute \u2013 Submit Dispute on Analyze Page",
+    "story": "As a job seeker reviewing a ghost-score classification, I want to flag a GHOST or REAL score I believe is incorrect, so that my disagreement is recorded and can inform future model improvements.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Evidence Panel Displayed Alongside Dispute UI",
+        "given": "a job seeker is on the Analyze page for a job that has a ghost-score classification (GHOST or REAL)",
+        "when": "the Analyze page finishes loading",
+        "thens": [
+          "The page will display the ghost-score classification (GHOST or REAL) with a one-sentence rationale.",
+          "The page will display all three deterministic signals \u2014 repost frequency, posting age, and cross-board spread \u2014 in an evidence panel adjacent to the classification.",
+          "The evidence panel will frame the classification as a likelihood, not a certainty, in accordance with GUARDRAILS.md non-alarmist framing.",
+          "A \"Dispute this score\" button or equivalent affordance will be visible on the page."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Dispute Form Opens on Button Activation",
+        "given": "a job seeker is on the Analyze page viewing a ghost-score classification and the evidence panel",
+        "when": "the job seeker activates the \"Dispute this score\" button",
+        "thens": [
+          "A dispute submission form will appear on the page without navigating away from the Analyze page.",
+          "The form will display the job ID and the current ghost-score classification being disputed.",
+          "The form will include an optional free-text comment field labeled \"[label to be confirmed]\".",
+          "The form will include a submission control labeled \"[label to be confirmed]\".",
+          "The form will include a cancel or dismiss control."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Dispute Submitted Without Optional Reason",
+        "given": "a job seeker has the dispute form open and has not entered any text in the optional comment field",
+        "when": "the job seeker submits the dispute form",
+        "thens": [
+          "The system will record a dispute entry containing: user ID, job ID, ghost-score classification being disputed, and submission timestamp.",
+          "The optional reason field will be stored as empty or null.",
+          "An in-app confirmation message will appear confirming the dispute was received.",
+          "The ghost-score classification displayed on the Analyze page will not change.",
+          "No email or push notification will be sent to the job seeker."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Dispute Submitted With Optional Reason",
+        "given": "a job seeker has the dispute form open and has entered text in the optional comment field",
+        "when": "the job seeker submits the dispute form",
+        "thens": [
+          "The system will record a dispute entry containing: user ID, job ID, ghost-score classification being disputed, submission timestamp, and the provided free-text reason.",
+          "An in-app confirmation message will appear confirming the dispute was received.",
+          "The ghost-score classification displayed on the Analyze page will not change.",
+          "No email or push notification will be sent to the job seeker."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Dispute Record Persisted for Downstream Use",
+        "given": "a job seeker has successfully submitted a dispute",
+        "when": "the dispute submission is processed by the system",
+        "thens": [
+          "The dispute record will be persisted to the disputes data store with all captured fields intact.",
+          "The persisted record will be retrievable by job ID and user ID for downstream review and model retraining analysis."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Dispute Form Dismissed Without Submitting",
+        "given": "a job seeker has the dispute form open",
+        "when": "the job seeker activates the cancel or dismiss control",
+        "thens": [
+          "The dispute form will close without recording any dispute entry.",
+          "The Analyze page will return to its previous state with the ghost-score classification and evidence panel unchanged."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Dispute Submitted Within 24 Hours of Job Posting",
+        "given": "a job seeker is on the Analyze page for a job posted within the last 24 hours and the repost signal may be incomplete",
+        "when": "the job seeker submits the dispute form",
+        "thens": [
+          "The system will [accept, queue, or reject the dispute per PM clarification on A4].",
+          "The job seeker will receive an in-app message appropriate to the outcome \u2014 confirmation if accepted, or an explanatory message if queued or rejected."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Duplicate Dispute Submitted for the Same Job",
+        "given": "a job seeker has already submitted a dispute for a specific job and that dispute record exists in the system",
+        "when": "the job seeker submits another dispute for the same job",
+        "thens": [
+          "The system will [allow, merge, or reject the duplicate dispute per PM clarification on A5].",
+          "The job seeker will receive an in-app message appropriate to the outcome."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Dispute Submitted for a Deleted or Archived Job",
+        "given": "a job seeker attempts to submit a dispute for a job that has been deleted or archived from the system",
+        "when": "the job seeker submits the dispute form",
+        "thens": [
+          "The system will [record or reject the dispute per PM clarification on A6].",
+          "The job seeker will receive an in-app message appropriate to the outcome \u2014 confirmation if recorded, or an explanatory error message if rejected."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Network or API Failure During Dispute Submission",
+        "given": "a job seeker has the dispute form open and a network or API failure occurs",
+        "when": "the job seeker submits the dispute form",
+        "thens": [
+          "No dispute record will be persisted to the data store.",
+          "An in-app error message will appear informing the job seeker that the submission failed.",
+          "The dispute form will remain open with any entered content preserved so the job seeker can retry."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Dispute Submission Audit Log Entry Created",
+        "given": "a job seeker has successfully submitted a dispute",
+        "when": "the dispute submission is processed by the system",
+        "thens": [
+          "The system will write an audit log entry recording the user ID, job ID, classification disputed, and submission timestamp.",
+          "The audit log entry will be distinct from the dispute record itself and will not be exposed to the job seeker."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Unauthorized Access Attempt to Dispute Submission",
+        "given": "an unauthenticated visitor attempts to access the dispute submission form on the Analyze page",
+        "when": "the visitor attempts to submit the dispute form",
+        "thens": [
+          "The system will reject the submission and will not persist any dispute record.",
+          "The visitor will be redirected to the authentication flow or shown an in-app message indicating authentication is required."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 \"Ghost score they think is wrong\" means the user believes the GHOST/REAL classification is incorrect, not that the rationale is unclear or incomplete.",
+      "A2 \u2014 Dispute submission is a one-way signal; users do not expect a dispute to immediately change the displayed score or trigger a re-evaluation.",
+      "A3 \u2014 Email or push notification of dispute receipt/outcome is out of scope because no notification infrastructure exists; in-app confirmation only.",
+      "A4 \u2014 Unclear whether disputes submitted within 24 hours of posting (before repost signal is available) should be accepted, queued, or rejected; requires PM clarification on dispute timing rules.",
+      "A5 \u2014 No rate-limiting, deduplication, or multi-dispute handling rules are defined; unclear if one user can dispute the same job multiple times.",
+      "A6 \u2014 Behavior undefined when a user disputes a job that has been deleted, archived, or is no longer in the system; requires PM decision.",
+      "A7 \u2014 No explicit tie-in to repost-detection batch cycles; unclear if disputes should be timestamped relative to batch runs or if re-evaluation should wait for the next batch.",
+      "A8 \u2014 No validation or conflict-detection logic defined for disputes that contradict the evidence panel; unclear if contradictory disputes should be flagged, rejected, or accepted as-is.",
+      "A9 \u2014 Database schema for storing disputes (columns, indexing, retention policy) is not yet designed; requires schema design work.",
+      "A10 \u2014 \"Optional user-provided reason\" assumes free-text comment is allowed; unclear if structured categories, predefined reasons, or character limits are required."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Ghost Score Dispute Feature\n\n- **Ghost-score classification exists but is read-only today.** The classifier returns GHOST or REAL with a one-sentence rationale, computed from three deterministic signals (repost frequency, posting age, cross-board spread) in `sql/features.sql`. The Analyze page currently displays the score only, with no mechanism for user feedback or dispute. ([C2])\n\n- **UI/UX guardrails require evidence and sensitivity framing.** GUARDRAILS.md mandates an eviden",
+  "analyst_spec": "# SCOPED SPEC: Ghost Score Dispute Feature\n\n## IN SCOPE\n- User-initiated dispute submission UI on the Analyze page, allowing a user to flag a ghost-score classification (GHOST or REAL) as potentially incorrect\n- Dispute capture mechanism that records: user ID, job ID, ghost-score classification being disputed, timestamp, and optional user-provided reason/comment\n- Display of the three deterministic signals (repost frequency, posting age, cross-board spread) alongside the dispute submission UI, p",
+  "rubric_scores": {
+    "clarity": {
+      "score": 3,
+      "reasoning": "The persona and intent are clear, but the story is verbose and introduces complexity ('GHOST or REAL') that muddies the single-action focus. Multiple ACs conflate UI layout with dispute functionality. The reference is tighter and more plainly written. Labels marked '[label to be confirmed]' reduce clarity."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases like network failure, unauthorized access, and cancel are well-specified. However, several edge-case ACs (ACE1, ACE2, ACE3) defer outcomes to PM clarification with placeholder language, making them untestable as written. The happy-path ACs are solid."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The generated story significantly expands scope beyond the original ask. It invents requirements around audit logging (ACE5), unauthorized access (ACE6), 24-hour posting timing rules (ACE1), deleted/archived jobs (ACE3), evidence panel display details, non-alarmist framing from GUARDRAILS.md, and database schema concerns. The reference story stays tightly scoped to the dispute button, submission, confirmation, and duplicate prevention. This story adds substantial uninvited scope."
+    },
+    "completeness": {
+      "score": 3,
+      "reasoning": "The story surfaces many edge cases and assumptions, which is thorough. However, it defers critical decisions (duplicate handling, free-text vs. preset reasons) to PM clarification rather than making reasonable defaults as the reference does. The reference cleanly resolves the preset-reasons assumption (A2) and duplicate behavior (ACE1), while this story leaves them open. The AC count (11 ACs) is excessive for the scope."
+    },
+    "grounding": {
+      "score": 3,
+      "reasoning": "Assumptions are labeled A1-A10 which is good practice. However, several assumptions reference external artifacts (GUARDRAILS.md, repost-detection batch cycles, database schema) that are not grounded in the original ask. The reference flags only what's necessary. Some assumptions (A7, A8, A9) go well beyond what the original ask requires and introduce ungrounded technical concerns. Free-text vs. preset reasons is flagged as unclear (A10) rather than resolved with a reasonable default as the reference does."
+    }
+  },
+  "rubric_avg": 3.0
+}

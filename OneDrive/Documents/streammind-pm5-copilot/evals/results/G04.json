@@ -1,0 +1,176 @@
+{
+  "id": "G04",
+  "ask": "The Browse page needs a way to filter out likely ghost jobs.",
+  "category": "grounded",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T17:00:49.024229+00:00",
+  "duration_s": 51.0,
+  "story": {
+    "title": "Browse Page Ghost-Job Filter \u2013 Surface and Filter Ghost-Job Classifications",
+    "story": "As a job seeker browsing the Browse page, I want to toggle a filter that hides jobs classified as ghost postings, so that I can focus my attention on job listings more likely to be real opportunities.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Ghost-Score Verdict Displayed on Job Listings",
+        "given": "a job seeker is on the Browse page and ghost-score verdicts are available for job listings",
+        "when": "the Browse page renders job listings",
+        "thens": [
+          "Each job listing will display its ghost-score verdict label ('GHOST' or 'REAL') alongside the listing.",
+          "The verdict label will use calm, non-alarmist styling with no red or alarm colors per GUARDRAILS.md.",
+          "The verdict will be framed as a model opinion, not a certainty (e.g., with qualifying language such as 'Likely' or 'Classified as')."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Evidence Panel Shows Three Deterministic Signals",
+        "given": "a job seeker is on the Browse page and a job listing has a ghost-score verdict",
+        "when": "the job seeker views the evidence panel for a job listing",
+        "thens": [
+          "The evidence panel will display all three deterministic signals: repost frequency, posting age, and cross-board spread.",
+          "The evidence panel will appear next to or below the verdict label.",
+          "The evidence panel will present the signals as supporting rationale for the model's verdict, not as definitive proof."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Ghost-Job Filter Toggle Present on Browse Page",
+        "given": "a job seeker is on the Browse page",
+        "when": "the Browse page loads",
+        "thens": [
+          "A binary filter control (toggle or checkbox) labeled to indicate hiding ghost jobs will be visible on the Browse page.",
+          "The filter control will default to the 'off' state, meaning all jobs (including GHOST-classified) are shown by default.",
+          "No jobs will be hidden from the listing until the job seeker explicitly activates the filter control."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Activating Filter Hides GHOST-Classified Jobs",
+        "given": "a job seeker is on the Browse page with the ghost-job filter in the default 'off' state",
+        "when": "the job seeker activates the ghost-job filter control",
+        "thens": [
+          "All job listings classified as 'GHOST' will be hidden from the Browse page results.",
+          "Only job listings classified as 'REAL' (or with no verdict, treated as 'REAL') will remain visible.",
+          "The filter control will reflect the active 'on' state."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Deactivating Filter Restores GHOST-Classified Jobs",
+        "given": "a job seeker is on the Browse page with the ghost-job filter in the active 'on' state",
+        "when": "the job seeker deactivates the ghost-job filter control",
+        "thens": [
+          "All job listings, including those classified as 'GHOST', will be restored to the Browse page results.",
+          "The filter control will reflect the inactive 'off' state."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Classification Latency Communicated to Job Seeker",
+        "given": "a job seeker is on the Browse page viewing ghost-score verdicts",
+        "when": "the Browse page renders the ghost-score verdict for any job listing",
+        "thens": [
+          "The UI will indicate that ghost-score classifications are updated daily and may be up to 24 hours old.",
+          "No real-time refresh of ghost-score verdicts will occur during the browsing session.",
+          "The displayed verdict will remain unchanged within the session even if a new daily batch is ingested while the job seeker is browsing."
+        ]
+      },
+      {
+        "id": "AC7",
+        "name": "Session-Level Filter State Does Not Persist Across Navigation",
+        "given": "a job seeker has activated the ghost-job filter on the Browse page",
+        "when": "the job seeker navigates away from the Browse page and returns",
+        "thens": [
+          "The ghost-job filter will return to the default 'off' state.",
+          "All jobs, including GHOST-classified listings, will be shown on the Browse page."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Null or Missing Ghost-Score Verdict Defaults to REAL",
+        "given": "a job seeker is on the Browse page and a job listing has no ghost-score verdict (null or missing)",
+        "when": "the Browse page renders that job listing",
+        "thens": [
+          "The job listing will be treated as 'REAL' and displayed by default.",
+          "No evidence panel will be shown for that listing.",
+          "The listing will remain visible when the ghost-job filter is active."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Empty State When All Jobs Are Filtered Out",
+        "given": "a job seeker is on the Browse page and all available job listings are classified as 'GHOST'",
+        "when": "the job seeker activates the ghost-job filter control",
+        "thens": [
+          "The Browse page will display the existing Browse empty-state pattern.",
+          "No job listings will be shown.",
+          "The filter control will remain visible and active so the job seeker can deactivate it."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Ghost-Score Data Unavailable Due to API or Query Failure",
+        "given": "a job seeker is on the Browse page and the ghost-score data cannot be retrieved (e.g., query failure or pipeline error)",
+        "when": "the Browse page renders job listings",
+        "thens": [
+          "Job listings will be displayed without ghost-score verdict labels or evidence panels.",
+          "The ghost-job filter control will be disabled or hidden to prevent filtering on unavailable data.",
+          "A non-alarmist inline message will inform the job seeker that classification data is temporarily unavailable."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Saved Job Later Classified as GHOST Remains in Saved List",
+        "given": "a job seeker has saved a job that is subsequently classified as 'GHOST' in a later daily batch",
+        "when": "the job seeker views their saved jobs list",
+        "thens": [
+          "The saved job will remain visible in the saved jobs list and will not be hidden, warned, or removed.",
+          "No notification or alert will be sent to the job seeker regarding the reclassification."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Ghost-score verdicts (GHOST/REAL) and their three supporting signals are queryable from the features table and can be joined to the Browse job-listing query without performance degradation.",
+      "A2 \u2014 The filter control (toggle/checkbox) is a simple binary show/hide, not a multi-select or slider; no partial-confidence filtering is in scope.",
+      "A3 \u2014 No user notifications or alerts are triggered when a saved job is later classified as ghost; notification infrastructure does not exist and is out of scope.",
+      "A4 \u2014 If a user has saved a job that is later classified as GHOST, the saved job remains in their saved list and is not hidden, warned, or removed. Behavior on saved-ghost-job interaction is undefined and deferred.",
+      "A5 \u2014 Filter state (ghost jobs shown/hidden) does not persist across sessions or page navigation; each Browse session starts with the default filter state (A9 specifies what that default is).",
+      "A6 \u2014 A job's ghost-score verdict is treated as immutable within a single user session, even if a new daily batch is ingested during browsing; refresh required to see updated classification.",
+      "A7 \u2014 Empty-state messaging (e.g., 'No jobs match your filters') is not specified; assume existing Browse empty-state pattern applies.",
+      "A8 \u2014 If a job has no ghost-score verdict (null/missing), it is treated as REAL (shown by default) and does not appear in the evidence panel; fallback behavior is assume-real.",
+      "A9 \u2014 Default filter state on Browse page load is 'show all jobs' (ghost filter off); user must explicitly toggle to hide ghost jobs."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC7: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Browse Page Ghost-Job Filtering\n\n- **Ghost-score classification already exists and is computed daily.** The classifier assigns GHOST or REAL verdicts with rationale based on three deterministic signals (repost frequency, posting age, cross-board spread) stored in `sql/features.sql`. Detection latency is up to 24 hours due to daily batch ingest. ([C2], [C3])\n\n- **Ghost scores are currently surfaced only on the Analyze page, not Browse.** The Browse page has no filtering or visibi",
+  "analyst_spec": "# SCOPED SPEC: Browse Page Ghost-Job Filter\n\n## IN SCOPE\n- Display ghost-job classification verdict (GHOST or REAL) alongside job listings on the Browse page\n- Add a filter toggle/checkbox to show/hide jobs classified as GHOST\n- Surface the three deterministic signals (repost frequency, posting age, cross-board spread) as rationale in an evidence panel next to or below the verdict\n- Apply calm, non-alarmist UI styling per GUARDRAILS.md (no red/alarm colors; frame as model opinion)\n- Respect the ",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story has a clear persona (job seeker), a single-action 'I want' statement, and plain language. However, the title is verbose and AC1/AC2 introduce evidence panels and verdict labels that go beyond the simple toggle concept in the reference, slightly muddying the core ask. The story sentence itself is clean and well-formed."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases are well covered (null verdicts, API failure, empty state, deactivation). However, some ACs (AC1, AC2, AC6, ACE4) test scope beyond the reference story's intent, and AC7 contradicts the reference's ACE2 (filter persists across pages). The reference specifies pagination persistence which the generated story misses and contradicts."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The generated story significantly expands scope beyond the original ask. It adds: verdict labels displayed on each listing (AC1), an evidence panel with three signals (AC2), classification latency communication (AC6), saved-job reclassification behavior (ACE4), and API failure handling (ACE3). These are substantial inventions not present in the reference. The core toggle functionality is present but buried under invented scope."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story is very thorough with 11 ACs covering many edge cases. It surfaces assumptions explicitly with A1-A9 prefixes. It covers null verdicts, empty states, API failures, and session behavior. However, it misses the 'count of hidden postings' feedback from the reference AC2, and the pagination persistence from reference ACE2. The assumption about filter not persisting across page navigation (A5, AC7) directly contradicts the reference."
+    },
+    "grounding": {
+      "score": 3,
+      "reasoning": "Assumptions are flagged with A-prefixes, which is good practice. However, many claims are not tied to the original context \u2014 the evidence panel with three signals, GUARDRAILS.md reference, daily batch ingestion cycle, and saved-jobs behavior are all introduced without grounding in the original ask. Some assumptions (A3, A4, A6) address scenarios not mentioned in the source request. The GUARDRAILS.md reference implies external context not provided. Several items should be marked PLACEHOLDER rather than stated as facts."
+    }
+  },
+  "rubric_avg": 3.4
+}

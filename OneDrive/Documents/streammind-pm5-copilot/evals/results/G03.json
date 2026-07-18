@@ -1,0 +1,203 @@
+{
+  "id": "G03",
+  "ask": "Let people snooze a saved job instead of deleting it.",
+  "category": "grounded",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T16:59:57.997942+00:00",
+  "duration_s": 51.3,
+  "story": {
+    "title": "Snooze Saved Job \u2013 Hide and Restore a Saved Job Without Deleting It",
+    "story": "As a job seeker with saved jobs, I want to snooze a saved job on my History page, so that I can temporarily hide it from my active list without losing it.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Snooze Action Available on Active Saved Job",
+        "given": "a job seeker with at least one active saved job is viewing the History page",
+        "when": "the job seeker opens the action menu or affordance for an active saved job",
+        "thens": [
+          "A \"Snooze\" option will be visible in the action menu or affordance for that job.",
+          "The \"Snooze\" option will be styled and labeled in calm, non-alarmist language per GUARDRAILS.md."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Snoozing an Active Job Updates Its State and Removes It from Default View",
+        "given": "a job seeker with at least one active saved job is viewing the History page",
+        "when": "the job seeker selects \"Snooze\" on an active saved job",
+        "thens": [
+          "The saved job's status will be updated to snoozed in the `saved_jobs` table.",
+          "The snoozed job will no longer appear in the default (active) view of the History page.",
+          "The snoozed job will remain in the database and will not be deleted.",
+          "The snooze state will persist across sessions and after logout."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Default History Page View Shows Only Active Saved Jobs",
+        "given": "a job seeker with a mix of active and snoozed saved jobs is viewing the History page",
+        "when": "the History page loads in its default state",
+        "thens": [
+          "Only saved jobs with an active status will be displayed in the default list.",
+          "Snoozed saved jobs will not appear in the default list."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Snoozed Jobs Are Accessible via Optional View or Toggle",
+        "given": "a job seeker with at least one snoozed saved job is viewing the History page",
+        "when": "the job seeker activates the [toggle or view option \u2014 label to be confirmed] to show snoozed jobs",
+        "thens": [
+          "Snoozed saved jobs will become visible in the History page.",
+          "Each snoozed job will be visually distinguishable from active saved jobs."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Unsnooze Action Available on Snoozed Job",
+        "given": "a job seeker is viewing snoozed saved jobs on the History page",
+        "when": "the job seeker opens the action menu or affordance for a snoozed saved job",
+        "thens": [
+          "An \"Unsnooze\" option will be visible in the action menu or affordance for that job.",
+          "The \"Snooze\" option will not be shown for a job that is already snoozed."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Unsnoozing a Job Restores It to Active State",
+        "given": "a job seeker is viewing snoozed saved jobs on the History page",
+        "when": "the job seeker selects \"Unsnooze\" on a snoozed saved job",
+        "thens": [
+          "The saved job's status will be updated to active in the `saved_jobs` table.",
+          "The restored job will appear in the default (active) view of the History page.",
+          "The restored job will no longer appear in the snoozed view."
+        ]
+      },
+      {
+        "id": "AC7",
+        "name": "Snooze State Syncs Across Devices and Sessions",
+        "given": "a job seeker has snoozed a saved job on one device or browser session",
+        "when": "the job seeker views the History page on a different device or browser session",
+        "thens": [
+          "The snoozed job will not appear in the default (active) view on the second device.",
+          "The snoozed job will be accessible via the snoozed view on the second device."
+        ]
+      },
+      {
+        "id": "AC8",
+        "name": "Unsaving a Snoozed Job Clears Snooze State",
+        "given": "a job seeker has a saved job in snoozed state",
+        "when": "the job seeker removes (unsaves) that job entirely",
+        "thens": [
+          "The saved job record will be deleted from the `saved_jobs` table.",
+          "The snooze state associated with that job will no longer exist.",
+          "The job will not appear in either the active or snoozed views of the History page."
+        ]
+      },
+      {
+        "id": "AC9",
+        "name": "Existing Saved Jobs Default to Active Status After Migration",
+        "given": "a job seeker has saved jobs that existed before the snooze feature was deployed",
+        "when": "the job seeker views the History page after the database migration runs",
+        "thens": [
+          "All pre-existing saved jobs will appear in the default (active) view.",
+          "No pre-existing saved job will be shown as snoozed unless the user explicitly snoozed it."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Empty State \u2014 All Saved Jobs Are Snoozed",
+        "given": "a job seeker has snoozed every saved job so that no active saved jobs remain",
+        "when": "the History page loads in its default state",
+        "thens": [
+          "The History page will display a message indicating there are no active saved jobs.",
+          "The History page will provide a visible affordance to view snoozed jobs."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Snoozed Job References a Deleted Posting",
+        "given": "a job seeker has a saved job in snoozed state and the referenced job posting is subsequently deleted from the system",
+        "when": "the job seeker views snoozed jobs on the History page",
+        "thens": [
+          "The snoozed saved job record will remain in the `saved_jobs` table and will not be automatically deleted.",
+          "The display behavior for an orphaned snoozed record will be [to be confirmed \u2014 see A2]."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Concurrent Snooze/Unsnooze Requests on the Same Job",
+        "given": "a job seeker has the History page open in two browser tabs with the same saved job visible",
+        "when": "the job seeker triggers a snooze action in one tab and an unsnooze action in the other tab near-simultaneously",
+        "thens": [
+          "The `saved_jobs` table will reflect a single consistent snooze status after both requests complete.",
+          "Neither request will result in a server error returned to the client.",
+          "The final state will follow last-write-wins behavior unless conflict resolution is implemented \u2014 see A3."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Network Failure During Snooze Action",
+        "given": "a job seeker with an active saved job is viewing the History page",
+        "when": "the job seeker selects \"Snooze\" and the network request fails before the server responds",
+        "thens": [
+          "The saved job's status in the `saved_jobs` table will remain unchanged.",
+          "The job will continue to appear in the active view of the History page.",
+          "An error message will be displayed to the job seeker indicating the snooze action could not be completed."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Unauthorized Access to Snooze Another User's Saved Job",
+        "given": "an authenticated job seeker is making a snooze request",
+        "when": "the request targets a saved job record that belongs to a different user",
+        "thens": [
+          "The server will return a 403 Forbidden response.",
+          "The targeted saved job's status will remain unchanged in the `saved_jobs` table.",
+          "No snooze action will be applied to the other user's record."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Snooze is a binary state (snoozed or active); there is no time-based expiration or multiple snooze levels.",
+      "A2 \u2014 Snoozed jobs that reference deleted postings should remain in the database (soft delete behavior); no cleanup or cascading delete is required.",
+      "A3 \u2014 The product does not currently have optimistic locking or conflict resolution for concurrent updates; assume last-write-wins or flag if this is a known risk.",
+      "A4 \u2014 \"History page\" is the only surface where snooze/unsnooze actions are exposed; no other product pages (e.g., job detail, search results) need snooze affordances in this phase.",
+      "A5 \u2014 The default view of the History page should hide snoozed jobs; the PM has not specified whether snoozed jobs should be visible by default, in a separate tab, or behind a toggle.",
+      "A6 \u2014 No user research or design spec exists yet for the snooze UI; the exact wording, icon, and interaction pattern are not defined."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "ACE3: WHEN contains 'and' \u2014 likely two ACs.",
+      "ACE4: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Snooze Saved Job Feature\n\n- **Saved jobs are currently binary (save/unsave) with no status field.** The `saved_jobs` table stores `posting_id` and `saved_at`, and the History page lists them sorted by save date. A snooze feature would require adding a status or state field to distinguish snoozed items from active saved jobs. ([C1] Saved jobs)\n\n- **No notification infrastructure exists yet in AutoApply.** Resend is the assumed email provider if used elsewhere in the portfolio, bu",
+  "analyst_spec": "# SCOPED SPEC: Snooze Saved Job\n\n## IN SCOPE\n- Add a snooze capability to saved jobs that allows users to temporarily hide a saved job from their History page without deleting it\n- Store snooze state (snoozed vs. active) on the `saved_jobs` table via a new status or state field\n- Provide UI affordance (button/menu option) on the History page to snooze an active saved job\n- Provide UI affordance to unsnooze (restore to active) a snoozed job\n- Filter History page display to show only active saved ",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story has a clear persona (job seeker), single-action intent, and plain language. The title is slightly verbose but unambiguous. Minor gap: it anchors to 'History page' which is a platform-specific term not in the original ask, and the story is slightly wordier than needed, but overall very readable."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases like network failure, unauthorized access, concurrent requests, and empty states are well-covered. The main gap vs. reference is that the generated story treats snooze as a binary/manual state with no time-based expiration, so there are no ACs for snooze expiry or job-closes-while-snoozed scenarios (which the reference covers). The PLACEHOLDER-style '[to be confirmed]' in ACE2 slightly weakens testability there."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story adds significant scope not in the original ask or reference: cross-device sync (AC7), migration of existing records (AC9), concurrent request handling (ACE3), network failure (ACE4), and unauthorized access (ACE5). While some of these are reasonable engineering concerns, they go well beyond the reference scope. The reference kept scope tight with only 4 ACs. The generated story also omits the time-based snooze duration concept entirely (treating it as binary), which is a meaningful scope deviation from the reference."
+    },
+    "completeness": {
+      "score": 3,
+      "reasoning": "The generated story covers many edge cases (empty state, orphaned posting, unsave-while-snoozed) and surfaces assumptions. However, it misses the core reference scenarios: time-based snooze expiry (AC2 in reference), job closing while snoozed (ACE1 in reference), and the preset duration concept. The assumption A1 explicitly rules out time-based expiration, which is a significant omission relative to the reference. The 6 assumptions are well-flagged but some key product questions (notification behavior during snooze) are not surfaced."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A6 with rationale. References to specific artifacts like GUARDRAILS.md and `saved_jobs` table show grounding in context. PLACEHOLDERs are used appropriately in ACE2 for unresolved behavior. The 'History page' reference appears to be grounded in platform context. Minor concern: GUARDRAILS.md reference in AC1 is unexplained and could be a PLACEHOLDER if that document doesn't exist in context."
+    }
+  },
+  "rubric_avg": 3.6
+}

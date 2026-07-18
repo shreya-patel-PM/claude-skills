@@ -1,0 +1,185 @@
+{
+  "id": "G07",
+  "ask": "We should add a referral program so users can invite friends.",
+  "category": "ungrounded",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T17:03:13.961225+00:00",
+  "duration_s": 47.9,
+  "story": {
+    "title": "Referral Program \u2013 Generate and Share Referral Link/Code",
+    "story": "As a registered user, I want to generate a unique referral link or code, so that new users who sign up through it are attributed to me as their referrer.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Referral Link/Code Generation",
+        "given": "a registered user who is authenticated and viewing their [referral invite section \u2014 location TBD]",
+        "when": "the user triggers the '[Generate Referral Link/Code \u2014 label TBD]' action",
+        "thens": [
+          "The system will generate a unique referral link or code tied to the user's account.",
+          "The generated link or code will be displayed to the user in the UI.",
+          "The referral link or code will be persisted in the data layer associated with the user's identity."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Referral Link/Code Shareable",
+        "given": "a registered user who has already generated a referral link or code",
+        "when": "the user accesses their [referral invite section \u2014 location TBD]",
+        "thens": [
+          "The previously generated referral link or code will be displayed without generating a new one.",
+          "The user will be able to copy the referral link or code via a '[Copy \u2014 label TBD]' action."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "New User Signup via Referral Link/Code \u2014 Attribution Recorded",
+        "given": "an unauthenticated visitor who has arrived at the signup flow with a valid referral link or code parameter",
+        "when": "the visitor completes account registration successfully",
+        "thens": [
+          "The system will recognize and validate the referral code or link parameter during registration.",
+          "The system will persist a referrer-to-referee relationship record linking the new user's account to the referring user's account.",
+          "The new user's account will be marked as having been referred."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Referral Attribution Visible to System",
+        "given": "a registered user who has a confirmed referrer-to-referee relationship stored in the system",
+        "when": "the system processes the completed signup of the referred user",
+        "thens": [
+          "The referrer's account record will reflect at least one successful attributed signup.",
+          "The attribution record will include the referrer's user ID and the referee's user ID."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Self-Referral Attempt Blocked",
+        "given": "a registered user who has generated their own referral link or code",
+        "when": "the same user attempts to sign up or apply the referral code to their own existing account",
+        "thens": [
+          "The system will reject the self-referral attempt.",
+          "No referrer-to-referee relationship record will be created.",
+          "An error message will be displayed to the user indicating the referral is invalid for their own account."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Referred User Already Has an Account",
+        "given": "an authenticated or unauthenticated visitor who arrives at the signup flow with a valid referral link or code",
+        "when": "the visitor attempts to register with an email address that already exists in the system",
+        "thens": [
+          "The system will reject the duplicate signup attempt.",
+          "No referrer-to-referee relationship record will be created for the duplicate account.",
+          "The visitor will be informed that an account with that email already exists."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Referral Link/Code Used with Different Email Than Invited",
+        "given": "an unauthenticated visitor who has a valid referral link or code but registers with an email different from any originally intended recipient",
+        "when": "the visitor completes account registration successfully",
+        "thens": [
+          "The system will still attribute the signup to the referrer based on the referral code or link parameter, not the email address.",
+          "The referrer-to-referee relationship record will be created using the new user's registered email and user ID."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Referrer Account Deleted or Suspended Before Referee Signup",
+        "given": "an unauthenticated visitor who holds a referral link or code belonging to a referrer whose account has since been deleted or suspended",
+        "when": "the visitor completes account registration using that referral link or code",
+        "thens": [
+          "The system will detect that the referrer account is no longer active.",
+          "No referrer-to-referee relationship record will be created.",
+          "The new user's account will be created successfully without referral attribution.",
+          "No error will be surfaced to the new user regarding the referrer's account status."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Invalid or Malformed Referral Link/Code at Signup",
+        "given": "an unauthenticated visitor who arrives at the signup flow with a referral link or code that is malformed, expired, or does not match any record in the system",
+        "when": "the visitor completes account registration",
+        "thens": [
+          "The system will reject the invalid referral code or link parameter.",
+          "No referrer-to-referee relationship record will be created.",
+          "The new user's account will be created successfully without referral attribution.",
+          "No error blocking registration will be shown to the new user due to the invalid referral parameter."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Multiple Referral Links/Codes Generated by Same User",
+        "given": "a registered user who has already generated at least one referral link or code and attempts to generate another",
+        "when": "the user triggers the '[Generate Referral Link/Code \u2014 label TBD]' action again",
+        "thens": [
+          "The system will follow the [active link/code policy \u2014 TBD: return existing, invalidate old, or allow multiple] as defined by product.",
+          "Only one referral link or code will be treated as active for attribution purposes at any given time, per the defined policy."
+        ]
+      },
+      {
+        "id": "ACE7",
+        "name": "Referral Signup Occurs Long After Invite Sent",
+        "given": "an unauthenticated visitor who holds a referral link or code that was generated an extended time ago",
+        "when": "the visitor completes account registration using that referral link or code",
+        "thens": [
+          "The system will attribute the signup to the referrer regardless of elapsed time, unless a referral expiration policy has been defined and implemented.",
+          "The referrer-to-referee relationship record will be created with a timestamp reflecting the actual signup date."
+        ]
+      },
+      {
+        "id": "ACE8",
+        "name": "Network or API Failure During Referral Attribution",
+        "given": "an unauthenticated visitor who has completed registration via a valid referral link or code",
+        "when": "the system encounters a network or API failure while attempting to persist the referrer-to-referee relationship record",
+        "thens": [
+          "The new user's account creation will not be blocked or rolled back due to the attribution failure.",
+          "The failed attribution event will be logged for retry or manual review.",
+          "No success attribution will be recorded until the persistence is confirmed."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 System has a stable user identity model (email or user ID) to track referrer and referee",
+      "A2 \u2014 Signup flow exists and can be modified to accept and validate a referral code/link parameter",
+      "A3 \u2014 No existing referral infrastructure, schema, or service exists (corpus confirms this)",
+      "A4 \u2014 'Invite friends' means one-to-one or one-to-many invitations, not a viral loop or social-graph feature",
+      "A5 \u2014 Success metric for this feature is undefined (invites sent? signups attributed? engagement post-signup?)",
+      "A6 \u2014 No decision yet on referral link format (UUID, short code, vanity URL, magic link)",
+      "A7 \u2014 No decision on invite delivery channel (in-app only, email, SMS, shareable URL)",
+      "A8 \u2014 Referral relationship is one-directional (referrer \u2192 referee) with no ongoing connection requirement",
+      "A9 \u2014 No incentive or reward is required to launch this feature (pure network-building play)"
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Referral Program Feature Ask\n\n\u2022 **No relevant product context found in corpus.** The corpus documents saved jobs, ghost-score classification, repost detection, notification infrastructure, UI guardrails, and a parked email-digest backlog item. None of these sections address user invitations, referral mechanics, incentive structures, friend networks, or related referral-program infrastructure. The corpus contains no schema, architecture notes, or roadmap items pertaining to refer",
+  "analyst_spec": "# SCOPED SPEC: Referral Program\n\n## IN SCOPE\n- Basic invite mechanism: users can generate a unique referral link or code\n- Invite delivery: users can share referral link/code with others (mechanism of share TBD)\n- Invite tracking: system records which user invited which new user\n- New user signup via referral: system recognizes and attributes signup to referrer\n\n## OUT OF SCOPE\n- Incentive structure (rewards, discounts, credits, bonuses \u2014 what referrer/referee receive)\n- Referral limits (caps on",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story uses a named persona ('registered user'), a clear single-action 'I want', and a concrete outcome. Labels and UI locations are appropriately flagged as TBD. Slightly more verbose than the reference but unambiguous and well-structured."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC follows strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are numerous and well-specified (self-referral, duplicate email, deleted referrer, malformed code, network failure, expiry). Exceeds the reference in edge-case coverage."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story goes significantly beyond the reference scope. It includes full attribution recording (AC3, AC4), multiple edge-case flows, and backend persistence details that the reference deliberately deferred to a separate epic. The reference intentionally kept scope minimal and flagged backend as a separate concern. The generated story conflates the invite-link generation story with the full referral attribution epic."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "Nine assumptions are surfaced and labeled A1-A9, covering identity model, signup flow, infrastructure, link format, delivery channel, reward structure, and success metrics. Edge cases are thorough. A review gate equivalent is implicit in the TBD markers throughout. Exceeds the reference in assumption coverage."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly flagged with A-prefixes. TBD markers are used for unresolved UI/product decisions. A3 explicitly notes corpus confirmation of no existing infrastructure. However, some claims (e.g., one-directional referral relationship, no reward needed to launch) are asserted as assumptions without flagging them as requiring PM confirmation, which the reference handles more cautiously with explicit PLACEHOLDER and review gate AC."
+    }
+  },
+  "rubric_avg": 4.2
+}

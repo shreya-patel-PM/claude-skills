@@ -1,0 +1,187 @@
+{
+  "id": "G14",
+  "ask": "Let users set up a daily email digest of new postings matching their search criteria.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T17:09:02.721889+00:00",
+  "duration_s": 70.1,
+  "story": {
+    "title": "Daily Email Digest \u2013 Subscribe and Receive Daily Search-Matched Postings Digest",
+    "story": "As a registered job seeker with saved searches, I want to enable a daily email digest for a saved search, so that I receive a curated list of new postings matching my criteria each day without manually re-running searches.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Enable Digest for a Saved Search",
+        "given": "a registered job seeker who has at least one saved search and has not yet enabled a daily digest for it",
+        "when": "the job seeker toggles the digest enable control to the 'on' state for a specific saved search",
+        "thens": [
+          "The system will persist the digest-enabled state for that saved search against the job seeker's user ID.",
+          "The UI will display the control in the enabled state immediately after the action.",
+          "The job seeker will be included in the next scheduled daily digest batch run for that saved search."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Disable Digest for a Saved Search",
+        "given": "a registered job seeker who has an active daily digest enabled for a saved search",
+        "when": "the job seeker toggles the digest enable control to the 'off' state for that saved search",
+        "thens": [
+          "The system will persist the digest-disabled state for that saved search against the job seeker's user ID.",
+          "The UI will display the control in the disabled state immediately after the action.",
+          "The job seeker will be excluded from subsequent daily digest batch runs for that saved search."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Daily Batch Job Identifies New Matching Postings",
+        "given": "a registered job seeker who has at least one saved search with digest enabled",
+        "when": "the daily digest batch job executes on its scheduled cadence",
+        "thens": [
+          "The batch job will query the posting index for postings matching each digest-enabled saved search that were added since the previous digest send for that search.",
+          "The batch job will record a digest send event in the audit log for each search processed, including user ID, search ID, match count, and timestamp.",
+          "Only postings indexed prior to the batch job execution time will be included, reflecting up to 24-hour ingest latency."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Digest Email Delivered with Matched Postings",
+        "given": "a registered job seeker whose digest-enabled saved search has one or more new matching postings identified by the batch job",
+        "when": "the batch job triggers email composition and delivery via Resend",
+        "thens": [
+          "The job seeker will receive one digest email per digest-enabled saved search that produced matches.",
+          "Each matched posting in the email will display the posting title, company name, posting URL, and posting date.",
+          "The email will link each posting title or URL directly to the original posting.",
+          "The batch job will record a successful send event in the audit log including user ID, search ID, number of postings included, and send timestamp."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Multiple Digest-Enabled Searches Processed Independently",
+        "given": "a registered job seeker who has two or more saved searches each with digest enabled",
+        "when": "the daily digest batch job executes on its scheduled cadence",
+        "thens": [
+          "The batch job will process each digest-enabled saved search independently and produce a separate digest email per search that has new matches.",
+          "A failure or empty result for one search will not suppress digest delivery for other searches with matches."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "No New Postings Match Criteria on a Given Day",
+        "given": "a registered job seeker whose digest-enabled saved search produces zero new matching postings during the batch run",
+        "when": "the daily digest batch job completes evaluation for that search",
+        "thens": [
+          "The behavior (skip send, send empty email, or send 'no matches' notification) will follow the policy defined by PM per A3.",
+          "The batch job will record a no-match event in the audit log including user ID, search ID, and timestamp regardless of send decision."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Saved Search Deleted After Digest Was Enabled",
+        "given": "a registered job seeker whose saved search has been deleted after digest was enabled for it",
+        "when": "the daily digest batch job attempts to process that search",
+        "thens": [
+          "The batch job will skip digest processing for the deleted search without throwing an unhandled error.",
+          "The behavior (silent skip or user notification) will follow the policy defined by PM per A4.",
+          "The batch job will record a skipped-deleted-search event in the audit log including user ID, search ID, and timestamp."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Email Delivery Failure via Resend",
+        "given": "a registered job seeker for whom the batch job has composed a digest email with matched postings",
+        "when": "the Resend API returns a delivery failure response",
+        "thens": [
+          "The batch job will apply retry logic according to the SLA and fallback behavior defined per A10.",
+          "The batch job will record a delivery-failure event in the audit log including user ID, search ID, error code, and timestamp.",
+          "Persistent failure handling (user notification, bounce management) will follow the policy defined per A10."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "User Disables Digest Between Batch Job Trigger and Send",
+        "given": "a registered job seeker who disables the digest for a saved search after the daily batch job has begun processing but before the email is sent",
+        "when": "the batch job reaches the send step for that search",
+        "thens": [
+          "Whether the in-flight digest is suppressed or delivered will follow the race-condition policy defined per A9.",
+          "The batch job will record the in-flight state and resolution in the audit log including user ID, search ID, and timestamp."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Unauthorized Access Attempt to Digest Preference",
+        "given": "an unauthenticated or unauthorized requestor",
+        "when": "a request is made to read or modify the digest enable/disable state for any saved search",
+        "thens": [
+          "The system will return an authorization error and will not modify or expose any digest preference data.",
+          "The system will record the unauthorized access attempt in the audit log including the requestor context and timestamp."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Posting Matches Multiple Digest-Enabled Searches for Same User",
+        "given": "a registered job seeker whose single posting matches two or more of their digest-enabled saved searches",
+        "when": "the daily digest batch job processes all digest-enabled searches for that job seeker",
+        "thens": [
+          "The deduplication behavior (posting appears in each matching digest separately, or is consolidated into one) will follow the strategy defined per A8.",
+          "The batch job will record match-overlap events in the audit log for observability."
+        ]
+      },
+      {
+        "id": "ACE7",
+        "name": "Batch Job Scheduler or Downstream Service Timeout or Failure",
+        "given": "the daily digest batch job is triggered by the scheduler",
+        "when": "the posting index query or Resend API call exceeds the configured timeout threshold",
+        "thens": [
+          "The batch job will log a timeout or service-failure event in the audit log including affected user IDs, search IDs, and timestamp.",
+          "The batch job will not silently drop affected digests without a recorded failure state.",
+          "Retry or fallback behavior will follow the SLA defined per A10."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Saved searches (or search criteria) can be queried and retrieved by user ID; schema and API endpoint exist or will be provided.",
+      "A2 \u2014 Users understand that daily digest reflects postings indexed up to ~24 hours prior (per C3 ingest latency); no same-day guarantee is acceptable.",
+      "A3 \u2014 Empty digest behavior is TBD: should we send an empty email, skip send entirely, or send a 'no matches' notification? PM to clarify.",
+      "A4 \u2014 Deleted search criteria should be handled gracefully (skip digest for that criterion, or notify user that search no longer exists?). Behavior TBD.",
+      "A5 \u2014 Digest send time (e.g., 9 AM user local time vs. 9 AM UTC) is not specified; timezone handling strategy needed.",
+      "A6 \u2014 Verdicts (ghost-score, repost signals) are explicitly out of scope for MVP; if future inclusion is desired, GUARDRAILS.md compliance (C5) will require evidence context and sensitivity framing.",
+      "A7 \u2014 Unsubscribe, preference center, and email frequency customization are out of scope; digest is enable/disable only per search.",
+      "A8 \u2014 Deduplication strategy when a posting matches multiple user search criteria is undefined; should same posting appear in multiple digests or be consolidated?",
+      "A9 \u2014 Race condition between digest job execution and user disabling digest is not addressed; clarify whether in-flight digests should be suppressed.",
+      "A10 \u2014 Email failure handling (retries, bounce management, user notification) is not specified; define SLA and fallback behavior."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC4: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Daily Email Digest of Search-Matched Postings\n\n\u2022 **Saved jobs infrastructure exists but is not search-aware.** Users can save postings via the Browse page and these are stored in `saved_jobs` with `posting_id` and `saved_at`, but there is no mechanism today to tag saves by search criteria or to retroactively filter saved items by search query. ([C1])\n\n\u2022 **No notification or email infrastructure is currently wired into AutoApply.** Resend is the assumed email provider (used elsew",
+  "analyst_spec": "# SCOPED SPEC: Daily Email Digest of Search-Matched Postings\n\n## IN SCOPE\n- User ability to designate one or more saved searches (or search criteria) as eligible for daily digest delivery\n- Daily batch job that identifies new postings matching user's designated search criteria (added since previous digest send)\n- Email composition and delivery via Resend of digest containing matching postings\n- User control to enable/disable digest for each search criterion\n- Digest delivery cadence: once per ca",
+  "rubric_scores": {
+    "clarity": {
+      "score": 3,
+      "reasoning": "The persona and intent are clear, but the title is redundant and verbose ('Daily Email Digest \u2013 Subscribe and Receive Daily Search-Matched Postings Digest'). The story itself is well-formed with a named persona and single action, but the overall presentation is cluttered with implementation detail that obscures the core user need. The reference is cleaner and more concise."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases like delivery failure, race conditions, and deleted searches are covered. However, some THENs defer to 'policy defined by PM per Ax' which makes them untestable as written. The reference's ACs are simpler and fully testable without deferral. Still, the overall testability is good with many concrete observable outcomes."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The generated story significantly expands scope beyond the original ask. It adds: explicit enable/disable UI toggle (AC1, AC2), audit logging throughout, unauthorized access controls (ACE5), batch job timeout handling (ACE7), race condition handling (ACE4), and deduplication strategy (ACE6). The reference keeps scope tight to digest receipt, no-match behavior, and multiple searches. The generated story invents substantial infrastructure and security scope not implied by the original ask."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story covers more edge cases than the reference (deleted search, delivery failure, race conditions, deduplication, timeouts). Key assumptions are surfaced with A-prefixes. However, the reference's AC for multiple saved searches consolidates into one email, while the generated story (AC5) sends separate emails per search \u2014 a meaningful behavioral difference that goes unacknowledged. The ghost score field mentioned in the reference is absent. Overall completeness is high but with some misalignment."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly flagged with A1-A10 prefixes. Resend is correctly identified as the email provider (matching reference A2). Ingest latency is acknowledged (A2). However, the story invents audit logging requirements, security/authorization requirements, and retry SLAs without grounding them in the original context. Some assumptions (A6 about ghost scores being out of scope) contradict the reference which includes ghost scores in digest listings. Generally well-flagged but with some ungrounded additions."
+    }
+  },
+  "rubric_avg": 3.4
+}

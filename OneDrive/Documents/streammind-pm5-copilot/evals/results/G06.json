@@ -1,0 +1,137 @@
+{
+  "id": "G06",
+  "ask": "Job seekers should be able to export their saved jobs as a CSV.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T17:02:26.057139+00:00",
+  "duration_s": 42.7,
+  "story": {
+    "title": "Saved Jobs Export \u2013 Download Saved Jobs as CSV",
+    "story": "As a job seeker, I want to download my saved jobs as a CSV file, so that I can access and use my saved job data outside the platform.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Authenticated Job Seeker Triggers CSV Download",
+        "given": "an authenticated job seeker who has one or more saved jobs",
+        "when": "the job seeker initiates the export action",
+        "thens": [
+          "The system will generate a CSV file containing only the authenticated user's saved jobs.",
+          "The CSV file will include a header row with at minimum the columns 'posting_id' and 'saved_at'.",
+          "Each saved job will be represented as one data row beneath the header.",
+          "The file will be delivered as a browser download without requiring a page reload.",
+          "The CSV file will be RFC 4180 compliant (comma-delimited, quoted fields, CRLF line endings)."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "CSV Reflects State at Time of Export Initiation",
+        "given": "an authenticated job seeker whose saved jobs list is being concurrently modified",
+        "when": "the job seeker initiates the export action",
+        "thens": [
+          "The CSV file will reflect the state of the job seeker's saved jobs at the moment the download was initiated.",
+          "No transactional consistency guarantee will be enforced for changes occurring during file generation."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Special Characters in posting_id Are Properly Escaped",
+        "given": "an authenticated job seeker whose saved jobs contain a 'posting_id' value with special characters (e.g., commas, quotes, newlines)",
+        "when": "the job seeker initiates the export action",
+        "thens": [
+          "The CSV file will quote and escape all fields containing special characters per RFC 4180.",
+          "The resulting CSV file will be parseable by standard CSV readers without data corruption."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Job Seeker with Zero Saved Jobs Attempts Export",
+        "given": "an authenticated job seeker who has no saved jobs",
+        "when": "the job seeker initiates the export action",
+        "thens": [
+          "The system will either deliver a valid CSV file containing only the header row ('posting_id', 'saved_at') with no data rows, or will display a user-friendly message indicating there are no saved jobs to export.",
+          "No error or unhandled exception will be returned to the job seeker."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Unauthenticated User Attempts Export",
+        "given": "an unauthenticated user who attempts to access the export action",
+        "when": "the export action is triggered",
+        "thens": [
+          "The system will deny the request and will not return any CSV data.",
+          "The user will be redirected to or presented with the authentication flow."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Authenticated Job Seeker Attempts to Export Another User's Saved Jobs",
+        "given": "an authenticated job seeker who attempts to request saved jobs belonging to a different user",
+        "when": "the export action is triggered with another user's identifier",
+        "thens": [
+          "The system will deny the request and will not return any data belonging to the other user.",
+          "The response will indicate an authorization failure without exposing the other user's data."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Network Interruption During File Download",
+        "given": "an authenticated job seeker whose browser download is interrupted by a network failure or session expiry after the download has begun",
+        "when": "the network interruption or session expiry occurs mid-download",
+        "thens": [
+          "The browser will handle the interrupted download using its native behavior.",
+          "No server-side retry logic will be invoked automatically."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "File Generation Service Failure",
+        "given": "an authenticated job seeker with saved jobs when the CSV file-generation service or download endpoint encounters an error",
+        "when": "the job seeker initiates the export action",
+        "thens": [
+          "The system will not deliver a partial or malformed CSV file to the job seeker.",
+          "The job seeker will receive a user-facing error message indicating the export could not be completed."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 'Saved jobs' refers exclusively to the `saved_jobs` table; no other data sources (e.g., applied jobs, bookmarks) are included in the export.",
+      "A2 \u2014 CSV format is RFC 4180 compliant (comma-delimited, quoted fields, CRLF line endings).",
+      "A3 \u2014 Export reflects the state of saved jobs at the moment the download is initiated; no transactional consistency guarantee is required if jobs are added/removed during generation.",
+      "A4 \u2014 No performance or file-size limits are specified; assume export must handle the current max saved-jobs volume without optimization work in this scope.",
+      "A5 \u2014 UI guardrails (GUARDRAILS.md) requiring evidence and sensitivity context apply only if the CSV includes ghost-score classifications; the ask does not specify whether scores are included, so this is flagged as a design decision needed before implementation.",
+      "A6 \u2014 No user preference or configuration is required (e.g., column selection, delimiter choice); CSV structure is fixed.",
+      "A7 \u2014 The export endpoint/UI trigger point (e.g., button location, page context) is not specified and is a separate design/UX decision."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Job Export (CSV) Feature Ask\n\n- **Saved jobs data structure exists and is queryable**: The `saved_jobs` table stores `posting_id` and `saved_at` for each saved item; the History page already retrieves and sorts this data. This is the foundation for an export query. ([C1])\n\n- **No export or data-download infrastructure is currently documented**: The corpus contains no reference to existing export pipelines, file-generation services, or download endpoints. This work will require n",
+  "analyst_spec": "# SCOPED SPEC: Job Seekers Export Saved Jobs as CSV\n\n## IN SCOPE\n- Enable job seekers to download a CSV file containing their saved jobs\n- CSV includes at minimum: `posting_id` and `saved_at` timestamp (queryable from existing `saved_jobs` table)\n- One-time export action (user initiates download; not scheduled or recurring)\n- Export applies to the authenticated user's own saved jobs only\n- CSV file generation and browser download delivery\n\n## OUT OF SCOPE\n- Email delivery of the CSV file (Resend",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The story is clearly written with a named persona, single-action intent, and plain language. The 'when' clauses use 'initiates the export action' rather than specifying a concrete UI element like a button, which is slightly less clear than the reference. The title is slightly redundant but not harmful."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. RFC 4180 compliance is a concrete, testable standard. However, ACE1 allows two alternative outcomes ('either...or'), which weakens testability by leaving implementation ambiguous. AC2's 'no transactional consistency guarantee' is difficult to test. The reference's ACs are more precisely scoped and unambiguous."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story adds significant scope beyond the original ask: authentication checks (ACE2), authorization/multi-user isolation (ACE3), network interruption handling (ACE4), service failure handling (ACE5), RFC 4180 compliance details, and concurrent modification behavior (AC2). While some are reasonable engineering concerns, several go well beyond what was asked and what the reference covers, risking scope creep."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story covers more edge cases than the reference (empty state, auth, errors, special characters). However, it notably omits specifying the column schema beyond 'posting_id' and 'saved_at', missing key fields like job title, company, and URL that the reference explicitly calls out. Assumption A7 flags the UI trigger as unresolved, which the reference resolves with a concrete button placement. The assumptions are thorough and well-labeled."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A7 with rationale. A5 appropriately flags the ghost-score/guardrails dependency. A7 flags the unresolved UI trigger. The column schema ('posting_id', 'saved_at') appears to be an assumption not grounded in the original ask and is not explicitly flagged as a PLACEHOLDER or assumption requiring PM confirmation, unlike the reference which explicitly calls this out as needing confirmation."
+    }
+  },
+  "rubric_avg": 3.8
+}

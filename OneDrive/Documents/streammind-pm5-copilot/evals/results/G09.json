@@ -1,0 +1,175 @@
+{
+  "id": "G09",
+  "ask": "Users should be able to save jobs and get notified when similar ones appear.",
+  "category": "scope_trap",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T17:04:54.160796+00:00",
+  "duration_s": 51.5,
+  "story": {
+    "title": "Save Jobs + Notify on Similar Postings \u2013 Email Notification on Similar Job Detection",
+    "story": "As a job seeker with saved postings, I want to receive an email notification when a similar job is detected, so that I can discover relevant new postings without manually monitoring the board.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Notification Preference Opt-In at Save Time",
+        "given": "a logged-in job seeker is viewing a job posting they have not yet saved",
+        "when": "the job seeker saves the posting via the save action",
+        "thens": [
+          "The posting will be added to the job seeker's saved list.",
+          "A notification preference toggle will be presented, defaulting to opted-in for similar-job email alerts for that saved posting.",
+          "The job seeker's notification preference state will be persisted in the `saved_jobs` table or related schema."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Notification Preference Opt-In via History Page",
+        "given": "a logged-in job seeker is viewing the History page with at least one saved posting that has notifications disabled",
+        "when": "the job seeker enables the notification toggle for a specific saved posting",
+        "thens": [
+          "The notification preference for that saved posting will be updated to opted-in.",
+          "The updated preference will be persisted immediately in the `saved_jobs` table or related schema.",
+          "No notifications will be sent retroactively for similar jobs detected before the opt-in was enabled."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Notification Preference Opt-Out via History Page",
+        "given": "a logged-in job seeker is viewing the History page with at least one saved posting that has notifications enabled",
+        "when": "the job seeker disables the notification toggle for a specific saved posting",
+        "thens": [
+          "The notification preference for that saved posting will be updated to opted-out.",
+          "The updated preference will be persisted immediately in the `saved_jobs` table or related schema.",
+          "No further similar-job email notifications will be sent for that saved posting."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Similar Job Detected \u2014 Email Notification Sent",
+        "given": "a logged-in job seeker has a saved posting with notifications opted-in and the 24-hour batch pipeline has completed a similarity match",
+        "when": "the batch pipeline identifies a new posting as similar to the job seeker's saved posting",
+        "thens": [
+          "An email notification will be sent to the job seeker's registered email address via Resend.",
+          "The email will identify the similar posting by title and include a link to view it.",
+          "The email will reference the specific similarity signal in calm, evidence-based language (e.g., \"This job appears frequently across boards, like the one you saved\").",
+          "The email will not use urgency language, marketing language, or present the similarity as a certainty.",
+          "The email will comply with all GUARDRAILS.md requirements for tone, evidence panels, and sensitivity context."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "No Notification Sent When User Is Opted Out",
+        "given": "a logged-in job seeker has a saved posting with notifications opted-out",
+        "when": "the batch pipeline identifies a new posting as similar to that saved posting",
+        "thens": [
+          "No email notification will be sent to the job seeker for that similarity match.",
+          "The similarity match event will be recorded internally without triggering any outbound communication."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Similar Job Already Saved by User \u2014 Notification Still Sent",
+        "given": "a logged-in job seeker has a saved posting with notifications opted-in and the similar posting detected by the batch pipeline is already in the job seeker's saved list",
+        "when": "the batch pipeline identifies the already-saved posting as similar",
+        "thens": [
+          "An email notification will be sent to the job seeker for the similar posting.",
+          "The email will not suppress or alter its content based on the similar posting already being saved."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Similar Job Detected in Same Batch Run as Save",
+        "given": "a logged-in job seeker saves a posting with notifications opted-in and a similar posting exists within the same 24-hour batch run",
+        "when": "the batch pipeline completes its similarity matching for that run",
+        "thens": [
+          "An email notification will be sent to the job seeker for the similar posting detected in the same batch run.",
+          "Both the saved posting and the similar posting will appear independently in the job seeker's saved list if the similar posting was also saved."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Re-Enabling Notifications Does Not Replay Missed Notifications",
+        "given": "a logged-in job seeker previously disabled notifications for a saved posting and then re-enables them via the History page",
+        "when": "the notification preference is updated to opted-in",
+        "thens": [
+          "No email notifications will be sent for similar jobs that were detected during the period when notifications were disabled.",
+          "Only similar jobs detected after the re-enable timestamp will trigger email notifications."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Referenced Job Posting No Longer Exists at Notification Time",
+        "given": "a logged-in job seeker has a saved posting with notifications opted-in and the original saved posting has been deleted or expired before the batch pipeline runs",
+        "when": "the batch pipeline identifies a similar posting and attempts to send an email notification",
+        "thens": [
+          "The email notification will be sent without referencing unavailable details of the expired or deleted posting.",
+          "The email copy will handle the missing posting gracefully and will not display broken links or empty fields for the original saved job.",
+          "The email will still identify the similar posting by title and include a link to view it."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Email Delivery Failure via Resend",
+        "given": "a logged-in job seeker has a saved posting with notifications opted-in and a similar job has been detected by the batch pipeline",
+        "when": "the Resend API returns an error during email delivery",
+        "thens": [
+          "The notification will not be delivered to the job seeker.",
+          "No retry will be attempted for the failed notification.",
+          "The delivery failure event will be logged internally for observability."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Duplicate Save of Same Posting \u2014 Independent Notifications",
+        "given": "a logged-in job seeker has saved the same job posting more than once (e.g., via different boards) with notifications opted-in on each saved entry",
+        "when": "the batch pipeline identifies a similar posting for that job",
+        "thens": [
+          "Each saved entry for the same posting will be treated independently for notification purposes.",
+          "The behavior for whether duplicate saves trigger one or multiple notifications will follow the definition confirmed in [A8 \u2014 behavior for duplicate saves is undefined and must be confirmed by the team]."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 \"Similar job\" is defined as a posting that shares high repost frequency, similar age, or cross-board spread with a saved job. No explicit similarity threshold or weighting is provided; ghost-score signals are repurposed as-is.",
+      "A2 \u2014 Notification preference is a binary opt-in/opt-out per saved job (not global). No granular controls (e.g., \"notify only for high-confidence matches\") are in scope.",
+      "A3 \u2014 Email is the only notification channel; no SMS, in-app alerts, or push notifications are required.",
+      "A4 \u2014 Resend integration and event pipeline do not yet exist and must be built as a dependency; no timeline or ownership is specified.",
+      "A5 \u2014 \"Similar\" matching runs as part of the existing 24-hour batch ingest pipeline; no new scheduling or orchestration is required.",
+      "A6 \u2014 Users can opt in to notifications at the moment of saving a job or later via the History page; no separate settings page is assumed.",
+      "A7 \u2014 Notification copy must reference the similarity signal (e.g., \"This job appears frequently across boards, like the one you saved\") to comply with GUARDRAILS.md; no marketing or urgency language is permitted.",
+      "A8 \u2014 Duplicate saves of the same posting are not deduplicated in the UI; each save is treated independently for notification purposes."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "ACE3: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF\n\n\u2022 **Saved jobs infrastructure exists but is minimal.** Users can already save postings (stored in `saved_jobs` table with `posting_id` and `saved_at`), and the History page displays them. However, saving is binary today with no status or metadata fields to track notification preferences or similarity matching. ([C1])\n\n\u2022 **Notification infrastructure does not yet exist in AutoApply.** No notification system is currently wired into the product. Resend is the assumed email provider",
+  "analyst_spec": "# SCOPED SPEC: Save Jobs + Notify on Similar Postings\n\n## IN SCOPE\n- Allow users to save a job posting (already exists; no change required)\n- Detect when a new job posting is \"similar\" to a user's saved job(s) using available signals (repost frequency, posting age, cross-board spread from ghost-score classifier)\n- Trigger an email notification to the user when a similar job is detected\n- Notification must comply with GUARDRAILS.md (calm tone, evidence-based framing, no false certainty)\n- Store n",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The persona is clear ('job seeker with saved postings'), the intent is unambiguous, and language is plain. However, the title is compound ('Save Jobs + Notify on Similar Postings') suggesting two concerns, and the story itself is slightly verbose. Minor gap compared to the clean single-action reference."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC uses proper GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are thoroughly covered (opt-out, delivery failure, expired postings, duplicate saves, re-enabling notifications). Exceeds the reference in edge case coverage."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story invents significant scope not present in the original ask or reference: per-posting notification preference toggles (AC1, AC2, AC3), opt-in/opt-out mechanics, History page UI changes, and Resend API specifics. The reference explicitly scopes to alert capability only, assuming saving already exists. The generated story conflates saving and alerting into a compound story and adds substantial UI/preference management scope."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "Assumptions are well-flagged with A1-A8 prefixes, dependencies are surfaced (Resend, batch pipeline), and edge cases are extensive. The reference's key assumptions (saving pre-exists, similarity algorithm is a spike, daily cadence) are partially addressed but the generated story treats saving as in-scope rather than pre-existing, which is a completeness gap relative to the reference framing."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Claims are tied to context with explicit assumption flags. GUARDRAILS.md is referenced, Resend is named as a dependency, and the 24-hour batch pipeline is grounded. A8 is appropriately flagged as undefined. However, some specifics (e.g., 'ghost-score signals', 'saved_jobs table schema') appear as PLACEHOLDER-level assumptions that aren't fully flagged as unverified, and the GUARDRAILS.md reference assumes context not provided in the original ask."
+    }
+  },
+  "rubric_avg": 4.0
+}

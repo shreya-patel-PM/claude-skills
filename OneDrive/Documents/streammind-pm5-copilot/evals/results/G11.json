@@ -1,0 +1,61 @@
+{
+  "id": "G11",
+  "ask": "Make it better.",
+  "category": "adversarial",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T17:06:15.073946+00:00",
+  "duration_s": 22.1,
+  "story": {
+    "title": "[Surface TBD] \u2013 Make It Better",
+    "story": "As a [role to be confirmed], I want [one improvement action to be confirmed], so that [measurable outcome to be confirmed].",
+    "acs": [
+      {
+        "id": "ACE1",
+        "name": "Unscoped Ask Blocks Story Execution",
+        "given": "[role to be confirmed] attempting to act on an undefined improvement",
+        "when": "a developer attempts to implement 'Make it better' without a clarified surface, problem statement, or success metric",
+        "thens": [
+          "No implementation work will begin until the PM specifies which surface or user flow is in scope.",
+          "No implementation work will begin until the PM defines what 'better' means in terms of a measurable metric or user pain point.",
+          "No implementation work will begin until the PM confirms the intended user role affected by the improvement."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 'Make it better' refers to a single, discrete surface or user flow (e.g., Analyze page, saved jobs list, or repost detection UX), not a cross-product initiative.",
+      "A2 \u2014 'Better' is measurable against a specific metric or user pain point (e.g., clarity, speed, discoverability, trust) that exists in product telemetry or user research but was not provided in this ask.",
+      "A3 \u2014 The PM intends to refine the ask before work begins; this spec is a blocker until clarification is provided."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF\n\nThe feature ask \"Make it better\" is too vague to map to specific product context. However, here is what exists in the corpus that *could* be relevant depending on what \"it\" refers to:\n\n\u2022 **Saved jobs experience exists but is minimal:** Users can save/unsave postings on the Browse page, stored in `saved_jobs` with only `posting_id` and `saved_at` fields. The History page lists them sorted by date. No status or categorization layer exists. ([C1])\n\n\u2022 **Ghost-score classification is",
+  "analyst_spec": "# SCOPED SPEC: \"Make it better\"\n\n## IN SCOPE\n- **None.** The ask cannot be scoped without clarification of which surface, flow, or metric \"it\" refers to.\n\n## OUT OF SCOPE\n- Saved jobs experience improvements (Browse/History pages, categorization, status layers)\n- Ghost-score classifier logic or signal tuning\n- Notification infrastructure or event-driven messaging\n- Repost detection latency reduction (24-hour batch \u2192 real-time)\n- Email digest or weekly summaries\n- Guardrails compliance (evidence ",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story uses named placeholders and a single-action 'I want' structure, matching the reference well. It adds a descriptive title hint '[Surface TBD]' which is slightly more informative than the reference. Minor gap: the title 'Make It Better' could be seen as echoing the ambiguous ask rather than flagging it as a placeholder."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "The generated story provides a well-structured GIVEN/WHEN/THEN for the review gate (ACE1) with three distinct, observable 'thens' that are more specific than the reference's single AC. It lacks a core behavior AC (AC1 equivalent), but the blocking conditions are clearly testable. The reference includes both a core behavior AC and a review gate; the generated story only has the review gate."
+    },
+    "scope_fidelity": {
+      "score": 5,
+      "reasoning": "The generated story stays strictly within the ambiguous ask, introduces no invented scope, and correctly treats the entire story as a blocker pending clarification. It does not attempt to guess or expand the feature, matching the reference's intent precisely."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story surfaces three assumptions (vs. two in the reference) and provides more granular blocking conditions. However, it omits a core behavior AC placeholder (AC1 equivalent), which the reference includes to signal where the real story will go. The additional A3 assumption about PM intent is a useful addition."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All claims are explicitly flagged as ungrounded or assumed. The A1/A2/A3 prefix convention is followed correctly. No unsubstantiated claims are made. The story appropriately uses PLACEHOLDER-equivalent language throughout, and the assumptions are more detailed than the reference without overreaching."
+    }
+  },
+  "rubric_avg": 4.4
+}

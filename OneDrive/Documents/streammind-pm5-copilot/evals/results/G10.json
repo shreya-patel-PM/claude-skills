@@ -1,0 +1,126 @@
+{
+  "id": "G10",
+  "ask": "Build a dashboard that shows analytics, trends, ghost score distribution, and application success rates.",
+  "category": "scope_trap",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T18:01:16.263360+00:00",
+  "duration_s": 48.6,
+  "story": {
+    "title": "Analytics Dashboard \u2013 Ghost-Score Distribution and Saved-Jobs Trend",
+    "story": "As a job seeker reviewing my saved listings, I want to view a ghost-score distribution chart and a saved-jobs volume trend on a dedicated dashboard page, so that I can understand the overall quality of my saved listings and how my saving activity has changed over time.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Ghost-Score Distribution Chart Renders for Saved Jobs",
+        "given": "a job seeker who has 10 or more saved jobs with ghost-score verdicts computed",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "A distribution chart (histogram or equivalent) will render showing the proportion of GHOST vs. REAL verdicts across all saved jobs.",
+          "Each verdict bucket will display a confidence band alongside the proportion value.",
+          "The chart will use calm, non-alarmist colors with no red or alarm-coded styling per GUARDRAILS.md.",
+          "No language implying certainty (e.g., 'This job is a ghost') will appear in chart labels, tooltips, or legends."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Saved-Jobs Volume Trend Chart Renders Over Time",
+        "given": "a job seeker who has at least one saved job with a recorded saved_at timestamp",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "A time-series chart will render showing the count of saved jobs aggregated by week or month using the saved_at field.",
+          "The chart will display one trend line representing saved-job volume over the available date range.",
+          "The aggregation period (weekly or monthly) will be visible to the job seeker in the chart label or axis."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Empty State When Fewer Than 10 Saved Jobs Exist",
+        "given": "a job seeker who has fewer than 10 saved jobs",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "The ghost-score distribution chart will not render.",
+          "A '[not enough data]' state message will display in place of the distribution chart, indicating insufficient data for a meaningful distribution."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Saved Jobs with Null or Missing Ghost-Scores Are Handled",
+        "given": "a job seeker whose saved jobs include one or more entries where the classifier did not produce a ghost-score verdict",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "Jobs with null or missing ghost-scores will be handled per the [exclude or separate bucket decision to be confirmed] policy.",
+          "The chart will not error or crash due to missing ghost-score values."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Stale Ghost-Score Verdicts Are Displayed Without Recomputation",
+        "given": "a job seeker whose saved jobs include ghost-score verdicts computed weeks or months prior",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "The distribution chart will reflect the [as-is or recomputed state to be confirmed] ghost-score verdicts per the confirmed staleness policy.",
+          "No silent recomputation of ghost-scores will occur at page load unless explicitly confirmed as in scope."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Timezone Normalization Applied to Trend Aggregation",
+        "given": "a job seeker whose saved_at timestamps are stored in mixed or unspecified timezones",
+        "when": "the job seeker navigates to the Analytics Dashboard page",
+        "thens": [
+          "The trend chart will aggregate saved-job counts using the [UTC, user local, or explicit normalization boundary to be confirmed] timezone policy.",
+          "The aggregation boundary applied will be consistent across all data points in the chart."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Unauthorized Access to Analytics Dashboard Is Blocked",
+        "given": "an unauthenticated visitor who has no active session",
+        "when": "the visitor attempts to navigate directly to the Analytics Dashboard page URL",
+        "thens": [
+          "The Analytics Dashboard page will not render.",
+          "The visitor will be redirected to the [login or authentication page to be confirmed]."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 'Analytics' in the ask refers to saved-job volume trends and ghost-score distribution; no other analytics (e.g., classifier performance, user engagement) are in scope unless explicitly confirmed.",
+      "A2 \u2014 'Trends' means time-series of saved-job count (not ghost-score trends), because ghost-score historical snapshots are not documented in the corpus.",
+      "A3 \u2014 'Ghost-score distribution' is a single cross-sectional snapshot (current state of all saved jobs), not a time-series of how the distribution shifts week-to-week.",
+      "A4 \u2014 Application success rates cannot be scoped without a schema and outcome-tracking mechanism; PM must clarify whether this is a separate epic or out of scope entirely.",
+      "A5 \u2014 The dashboard is a new page or panel, not an enhancement to the existing Analyze or History pages; confirm navigation and placement with PM.",
+      "A6 \u2014 'Calm UI' per GUARDRAILS.md means no red/alarm colors, no language implying certainty (e.g., 'This job is a ghost'), and evidence-based framing; confirm visual design direction with design team before build."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Analytics Dashboard Feature Ask\n\n- **Ghost-score data exists and is foundational to the ask.** The classifier already produces GHOST/REAL verdicts with rationales, and three deterministic signals (repost frequency, posting age, cross-board spread) are computed in `sql/features.sql`. The Analyze page currently displays the score in isolation. (C2)\n\n- **UI and presentation constraints are documented.** GUARDRAILS.md mandates calm UI design (no alarmist red), an evidence panel alon",
+  "analyst_spec": "# SCOPED SPEC: Analytics Dashboard\n\n## IN SCOPE\n- Display ghost-score distribution (histogram or similar) across all saved jobs, showing the proportion of GHOST vs. REAL verdicts with confidence bands per GUARDRAILS.md (calm UI, no alarmist framing).\n- Render a single trend line or time-series chart showing count of saved jobs over time (weekly or monthly aggregation) using `saved_jobs.saved_at` metadata.\n\n## OUT OF SCOPE\n- **Application success rates.** No schema or outcome-tracking mechanism e",
+  "rubric_scores": {
+    "clarity": {
+      "score": 3,
+      "reasoning": "The generated story combines two distinct features (ghost-score distribution AND saved-jobs trend) into a single story, creating a compound ask. The reference deliberately narrows to one feature. The persona and goal are clear, but the dual-feature scope muddies the single-action 'I want' principle. The story title and narrative are readable but the compound nature reduces clarity."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases (empty state, null scores, stale verdicts, timezone, auth) are well-covered. However, several THENs contain placeholder brackets like '[exclude or separate bucket decision to be confirmed]' and '[UTC, user local, or explicit normalization boundary to be confirmed]', which are not fully testable as written. The 10-job threshold for the empty state is a specific, testable criterion not present in the reference."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The reference explicitly scopes to ghost-score distribution only, with a stated assumption that trends, analytics, and application success rates are separate stories. The generated story combines ghost-score distribution with a saved-jobs volume trend chart in a single story, violating the single-responsibility principle. While it does flag application success rates as needing PM clarification (A4), it still bundles two features together, which is a significant scope fidelity issue against the reference."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story is thorough with 7 ACs covering the happy path, empty state, null scores, stale verdicts, timezone normalization, and authentication. Assumptions are well-documented with 6 flagged items. The reference has only 2 ACs and 3 assumptions, so the generated story goes deeper on edge cases. The placeholder decisions in some ACs slightly reduce completeness, but overall coverage is strong."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A6 with rationale tied to the original ask. GUARDRAILS.md is referenced specifically. PLACEHOLDERs are used appropriately for unresolved decisions (timezone policy, null handling, staleness policy). The reference to Supabase store is absent but the corpus reference is implied. The story correctly flags application success rates as ungrounded without schema. Minor deduction for the saved-jobs trend feature which appears to be an assumption not clearly grounded in the original ask."
+    }
+  },
+  "rubric_avg": 3.4
+}

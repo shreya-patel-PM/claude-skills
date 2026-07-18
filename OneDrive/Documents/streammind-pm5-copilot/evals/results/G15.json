@@ -1,0 +1,188 @@
+{
+  "id": "G15",
+  "ask": "We need to track which jobs users apply to and whether they hear back.",
+  "category": "scope_trap",
+  "difficulty": "medium",
+  "mode": "live",
+  "ts": "2026-07-18T17:10:02.949997+00:00",
+  "duration_s": 60.2,
+  "story": {
+    "title": "Job Application & Response Tracking \u2013 Record and Surface Application State",
+    "story": "As a job seeker, I want to track which jobs I have applied to and whether I have heard back, so that I can monitor my application history and response status in one place.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Record Application Submission Event",
+        "given": "a job seeker is authenticated and viewing a job posting that has not yet been applied to",
+        "when": "the job seeker submits an application to that posting",
+        "thens": [
+          "A new record will be created in the `applications` table containing user_id, posting_id, applied_at timestamp, and a reference application_id.",
+          "The response_status field will be set to 'no response' by default.",
+          "The record will include created_at and updated_at timestamps."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Display Application History with Response Status",
+        "given": "a job seeker has one or more recorded applications",
+        "when": "the job seeker navigates to their application history view",
+        "thens": [
+          "Each application entry will display the job posting title, applied_at date, and current response_status.",
+          "The time elapsed since application (e.g., 'Applied 5 days ago') will be shown alongside each entry.",
+          "Response status will be rendered using calm UI language and an evidence panel per GUARDRAILS.md, with no language implying certainty about outcomes."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Display 'No Response' State Without Implying Rejection",
+        "given": "a job seeker has an application with response_status of 'no response'",
+        "when": "the job seeker views that application in their history",
+        "thens": [
+          "The status label will display 'No response yet' and will not display 'Rejected' or any language implying a negative outcome.",
+          "An evidence panel will be shown clarifying that silence does not indicate rejection, per GUARDRAILS.md."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Update Response Status When Response Is Received",
+        "given": "a job seeker has an existing application record and a response has been captured by the response ingestion mechanism",
+        "when": "the inbound response is matched to the application record",
+        "thens": [
+          "The response_status field will be updated to the appropriate categorical value ('rejected', 'offer', or 'other').",
+          "The response_received_at timestamp will be recorded.",
+          "The response_channel field will be populated if detectable (e.g., 'email').",
+          "The updated_at timestamp on the application record will be refreshed."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Surface Application Status Alongside Saved Jobs",
+        "given": "a job seeker has both a saved job entry and a corresponding application record for the same posting",
+        "when": "the job seeker views their saved jobs list",
+        "thens": [
+          "The application status (e.g., 'Applied', 'No response yet', 'Offer received') will be displayed inline with the saved job entry.",
+          "The display will comply with GUARDRAILS.md calm UI and evidence panel requirements."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Retain Application Record When Saved Job Is Deleted",
+        "given": "a job seeker has an application record and a saved_jobs entry for the same posting",
+        "when": "the job seeker removes the job from their saved jobs list",
+        "thens": [
+          "The saved_jobs record will be deleted.",
+          "The corresponding application record in the `applications` table will be retained and remain queryable.",
+          "The application history view will continue to display the application entry without the saved job reference."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Duplicate Application Submission \u2014 Same Posting",
+        "given": "a job seeker already has an application record for a given posting",
+        "when": "the job seeker submits another application to the same posting",
+        "thens": [
+          "A new, separate application record will be created with its own applied_at timestamp and application_id.",
+          "Both records will be independently queryable in the application history view.",
+          "No deduplication or merge logic will be applied."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Response Arrives Before Application Is Recorded",
+        "given": "an inbound response signal has been captured for a posting but no matching application record exists for that user and posting",
+        "when": "the response ingestion mechanism attempts to match the response to an application",
+        "thens": [
+          "The response will not be silently discarded; it will be held in a pending or unmatched state pending reconciliation.",
+          "An error or warning event will be logged indicating the unmatched response.",
+          "No application record will be auto-created from the inbound response alone."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Reposted Job \u2014 Application Linkage Ambiguity",
+        "given": "a job seeker has an application record for a posting_id and the repost detection batch (up to 24-hour latency) flags that posting as a repost",
+        "when": "the job seeker views their application history",
+        "thens": [
+          "The existing application record will remain linked to the original posting_id and will not be automatically transferred to the reposted posting.",
+          "No response tracking state will be reset due to repost detection.",
+          "The UI will not surface the repost flag as a change to application status."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Unauthorized Access to Another User's Application History",
+        "given": "an authenticated job seeker is making a request to retrieve application history",
+        "when": "the request references a user_id that does not match the authenticated session",
+        "thens": [
+          "The system will return a 403 Forbidden response.",
+          "No application records belonging to the other user will be returned.",
+          "The unauthorized access attempt will be logged as a security event."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Empty Application History State",
+        "given": "a job seeker has no recorded application submissions",
+        "when": "the job seeker navigates to their application history view",
+        "thens": [
+          "The view will display an empty state message such as 'No applications tracked yet.'",
+          "No error state or loading spinner will persist beyond the initial data fetch.",
+          "A prompt or call-to-action guiding the job seeker to apply to jobs will be shown."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Network or API Failure During Application Record Creation",
+        "given": "a job seeker has submitted an application and the system is attempting to write to the `applications` table",
+        "when": "a network or database failure occurs during the write operation",
+        "thens": [
+          "The failure will be logged with sufficient context (user_id, posting_id, attempted timestamp) for retry or manual recovery.",
+          "The job seeker will be shown an error message indicating the application could not be tracked at this time.",
+          "No partial or corrupt application record will be persisted."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 'Hear back' is binary or categorical (no response / rejected / offer / other); exact taxonomy not specified in ask. Requires PM clarification.",
+      "A2 \u2014 No notification system will be built as part of this work; response tracking is read-only from user perspective (query-only, no alerts).",
+      "A3 \u2014 Retention policy for applications when saved_jobs are deleted is undefined; assume applications are retained independently.",
+      "A4 \u2014 Repost detection (24-hour batch latency) does not automatically link new posting to prior application; unclear if user must reapply or if system should suggest it.",
+      "A5 \u2014 Inbound response detection method (email webhook, user-reported, API, etc.) is not yet designed; this spec assumes a mechanism exists but does not define it.",
+      "A6 \u2014 Duplicate applications (same user, same posting, multiple submissions) should be tracked as separate records; deduplication logic is out of scope.",
+      "A7 \u2014 'No response' state must be clearly distinguished from 'rejected' in UI to avoid false negatives; GUARDRAILS.md evidence panels required.",
+      "A8 \u2014 Schema design (new `applications` table vs. extending `saved_jobs`) is not specified; recommend separate table to avoid tight coupling.",
+      "A9 \u2014 Response ingestion pipeline (how responses are captured and matched to applications) is not yet designed; this spec assumes it will exist.",
+      "A10 \u2014 Posting IDs remain stable across reposts; if posting_id changes on repost, application-to-repost linking strategy is undefined."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Job Application & Response Tracking\n\n\u2022 **Saved jobs infrastructure exists but lacks application state.** The `saved_jobs` table currently stores only `posting_id` and `saved_at` with binary save/unsave semantics; there is no field to track application status or response state. ([C1])\n\n\u2022 **No notification or response-tracking infrastructure is currently wired.** AutoApply has no notification system in place yet, though Resend is the assumed email provider if needed elsewhere in t",
+  "analyst_spec": "# SCOPED SPEC: Job Application & Response Tracking\n\n## IN SCOPE\n\n- **Track application submission events:** Record when a user applies to a job posting (timestamp, user_id, posting_id, application_id or reference).\n- **Track response receipt state:** Record whether a user has heard back from an employer (binary or categorical: no response, rejected, offer, other).\n- **Store response metadata:** Capture timestamp of response receipt and response channel (if detectable: email, platform, etc.).\n- *",
+  "rubric_scores": {
+    "clarity": {
+      "score": 2,
+      "reasoning": "The generated story combines two distinct concerns (tracking applications AND hearing back) into a single compound story, violating the single-action principle. The reference correctly scopes to one action ('mark as Applied') and explicitly defers response tracking. The persona is named but the 'I want' clause is compound and ambiguous about what the primary action is. The title is also overly technical and not plain product language."
+    },
+    "testability": {
+      "score": 3,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure and are observable. However, several ACs reference undefined mechanisms ('response ingestion mechanism', 'repost detection batch') that make them untestable without additional specs. AC4 in particular depends on an undesigned system. Edge cases are numerous but some (ACE2, ACE3) test infrastructure that doesn't exist yet, making them premature. The reference's ACs are tighter and immediately testable."
+    },
+    "scope_fidelity": {
+      "score": 1,
+      "reasoning": "The original ask was to track applications and whether users hear back \u2014 the reference correctly split this into at least two stories and scoped this story to just the 'mark as applied' action. The generated story invents substantial scope: a full response ingestion pipeline, email webhook matching, repost detection integration, security/authorization ACs, data retention policies, and a separate applications table schema. This is a significant scope explosion beyond what was asked."
+    },
+    "completeness": {
+      "score": 3,
+      "reasoning": "The generated story is thorough in edge cases (12 ACs, 10 assumptions) but completeness is undermined by the scope inflation \u2014 many ACs cover systems not yet designed. The reference's approach of surfacing assumptions to defer out-of-scope items (like response tracking) is more appropriate. The generated story does surface important assumptions (A1, A5, A8, A9) but buries them under excessive invented scope. The 'already applied' duplicate prevention edge case from the reference is handled differently (ACE1 allows duplicates, contradicting typical UX expectations)."
+    },
+    "grounding": {
+      "score": 2,
+      "reasoning": "The generated story references 'GUARDRAILS.md' multiple times without establishing what this document is or whether it exists in context. It assumes an 'applications' table, a 'response ingestion mechanism', 'repost detection batch', and email webhooks \u2014 none of which are grounded in the original ask. While assumptions are flagged with A-prefixes, many are PLACEHOLDER-level claims presented as design decisions rather than flagged unknowns. The reference correctly flags response tracking as a separate story rather than designing an entire pipeline around it."
+    }
+  },
+  "rubric_avg": 2.2
+}

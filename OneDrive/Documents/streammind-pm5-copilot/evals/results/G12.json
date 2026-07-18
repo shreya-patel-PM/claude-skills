@@ -1,0 +1,215 @@
+{
+  "id": "G12",
+  "ask": "The ghost score should also factor in the company's Glassdoor rating, LinkedIn headcount trend, and whether the company has posted on Indeed in the last 30 days.",
+  "category": "adversarial",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T17:07:15.414608+00:00",
+  "duration_s": 60.3,
+  "story": {
+    "title": "Ghost Score Expansion \u2013 Add Glassdoor, LinkedIn, and Indeed Signals",
+    "story": "As a job seeker reviewing a company's ghost-score, I want the score to incorporate the company's Glassdoor rating, LinkedIn headcount trend, and Indeed posting recency, so that I can evaluate ghost-job likelihood with richer, more transparent evidence.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Glassdoor Rating Ingested and Stored Daily",
+        "given": "a job seeker whose daily batch ingest pipeline is running on schedule",
+        "when": "the daily batch job executes",
+        "thens": [
+          "The pipeline will pull the company-level aggregate Glassdoor star rating for each company in scope.",
+          "The ingested rating will be persisted to the database schema defined for Glassdoor signals.",
+          "The ingest timestamp will be recorded alongside the rating value."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "LinkedIn Headcount Trend Ingested and Stored Daily",
+        "given": "a job seeker whose daily batch ingest pipeline is running on schedule",
+        "when": "the daily batch job executes",
+        "thens": [
+          "The pipeline will pull LinkedIn headcount history for each company in scope over the defined lookback window.",
+          "The computed headcount trend (percentage growth or absolute delta) will be persisted to the database schema defined for LinkedIn signals.",
+          "The ingest timestamp will be recorded alongside the trend value."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Indeed Posting Recency Ingested and Stored Daily",
+        "given": "a job seeker whose daily batch ingest pipeline is running on schedule",
+        "when": "the daily batch job executes",
+        "thens": [
+          "The pipeline will pull the most recent Indeed job posting timestamp for each company in scope.",
+          "A boolean flag indicating whether the company posted on Indeed within the last 30 days will be derived and persisted.",
+          "The ingest timestamp will be recorded alongside the flag value."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Ghost Score Classifier Incorporates All Three New Signals",
+        "given": "a job seeker viewing a company whose Glassdoor rating, LinkedIn headcount trend, and Indeed posting recency are all available in the database",
+        "when": "the ghost-score classifier in `sql/features.sql` runs for that company",
+        "thens": [
+          "The classifier will consume the Glassdoor aggregate star rating as an input signal.",
+          "The classifier will consume the LinkedIn headcount trend value as an input signal.",
+          "The classifier will consume the Indeed 30-day posting recency flag as an input signal.",
+          "The classifier will return a GHOST or REAL verdict that reflects all three new signals in addition to the existing three signals.",
+          "The classifier output will include an updated rationale string that names the contribution of each new signal."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Glassdoor Rating Surfaced in UI Evidence Panel",
+        "given": "a job seeker viewing the ghost-score detail view for a company with an available Glassdoor rating",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the company's Glassdoor aggregate star rating as a discrete evidence item.",
+          "The evidence item will be labelled \"Glassdoor Rating\".",
+          "The displayed value will match the value stored in the database from the most recent batch ingest."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "LinkedIn Headcount Trend Surfaced in UI Evidence Panel",
+        "given": "a job seeker viewing the ghost-score detail view for a company with available LinkedIn headcount trend data",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the company's LinkedIn headcount trend as a discrete evidence item.",
+          "The evidence item will be labelled \"LinkedIn Headcount Trend\".",
+          "The displayed value will match the computed trend stored in the database from the most recent batch ingest."
+        ]
+      },
+      {
+        "id": "AC7",
+        "name": "Indeed Posting Recency Surfaced in UI Evidence Panel",
+        "given": "a job seeker viewing the ghost-score detail view for a company with available Indeed posting data",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display whether the company posted on Indeed in the last 30 days as a discrete evidence item.",
+          "The evidence item will be labelled \"Indeed Posting Recency\".",
+          "The displayed value will reflect the boolean flag stored in the database from the most recent batch ingest."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Glassdoor Rating Missing for Company",
+        "given": "a job seeker viewing the ghost-score detail view for a company that has no Glassdoor rating in the database",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the \"Glassdoor Rating\" evidence item with a \"Not available\" indicator.",
+          "The classifier will apply the [fallback behavior to be confirmed per A4] for the missing Glassdoor signal.",
+          "The ghost-score rationale will note that the Glassdoor signal was unavailable."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "LinkedIn Headcount Data Unavailable for Company",
+        "given": "a job seeker viewing the ghost-score detail view for a company that has no LinkedIn headcount data in the database",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the \"LinkedIn Headcount Trend\" evidence item with a \"Not available\" indicator.",
+          "The classifier will apply the [fallback behavior to be confirmed per A5] for the missing LinkedIn signal.",
+          "The ghost-score rationale will note that the LinkedIn headcount signal was unavailable."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Company Has No Indeed Posting History",
+        "given": "a job seeker viewing the ghost-score detail view for a company that has never posted on Indeed",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the \"Indeed Posting Recency\" evidence item with the value determined by [signal vs. missing-data treatment to be confirmed per A6].",
+          "The classifier will treat the absence of Indeed posting history according to [behavior to be confirmed per A6].",
+          "The ghost-score rationale will note the Indeed posting status for that company."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Company Too New to Compute LinkedIn Headcount Trend",
+        "given": "a job seeker viewing the ghost-score detail view for a newly listed company whose LinkedIn headcount history is shorter than the minimum required lookback window",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the \"LinkedIn Headcount Trend\" evidence item with a \"Insufficient history\" indicator.",
+          "The classifier will apply the [fallback behavior to be confirmed per A7] when the minimum data window is not met.",
+          "The ghost-score rationale will note that insufficient headcount history was available."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Glassdoor Rating Based on Fewer Than Five Reviews",
+        "given": "a job seeker viewing the ghost-score detail view for a company whose Glassdoor rating is based on fewer than 5 reviews",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The evidence panel will display the Glassdoor rating value alongside [confidence or sample-size context to be confirmed per A8].",
+          "The displayed sample-size context will reflect the actual review count stored in the database."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Batch Ingest Fails for One or More External Sources",
+        "given": "a job seeker whose daily batch ingest pipeline encounters a failure fetching data from one or more of Glassdoor, LinkedIn, or Indeed",
+        "when": "the batch job completes with a partial or full source failure",
+        "thens": [
+          "The pipeline will log the failure event with the affected source name and timestamp.",
+          "The ghost-score classifier will apply [recompute-with-partial-signals or hold-prior-state behavior to be confirmed per A9] for affected companies.",
+          "The UI evidence panel will display a \"Data as of [last successful ingest date]\" indicator for any signal sourced from a failed ingest.",
+          "No stale or corrupted signal values will be written over the last successfully ingested values."
+        ]
+      },
+      {
+        "id": "ACE7",
+        "name": "Indeed Posting Timestamp Is Malformed or Ambiguous",
+        "given": "a job seeker whose batch ingest pipeline receives a malformed or ambiguous Indeed posting timestamp for a company",
+        "when": "the pipeline attempts to derive the 30-day posting recency flag",
+        "thens": [
+          "The pipeline will log a validation error identifying the company, the raw timestamp value, and the ingest timestamp.",
+          "The pipeline will apply [validation and fallback behavior to be confirmed per A10] rather than persisting an invalid derived flag.",
+          "The evidence panel will display the \"Indeed Posting Recency\" item with a \"Not available\" indicator for that company until a valid timestamp is ingested."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 \"Glassdoor rating\" means the company's aggregate star rating (e.g., 3.5/5.0), not individual review sentiment.",
+      "A2 \u2014 \"LinkedIn headcount trend\" is computed as a time-series change (e.g., % growth or absolute delta) over a specific lookback window; the window length is not specified.",
+      "A3 \u2014 The relative weight or importance of each new signal in the deterministic classifier is not defined; flagging as product decision.",
+      "A4 \u2014 Behavior when Glassdoor rating is missing (null, skip signal vs. treat as negative signal) is undefined.",
+      "A5 \u2014 Behavior when LinkedIn headcount data is unavailable or company is not on LinkedIn is undefined.",
+      "A6 \u2014 Whether \"no Indeed posting in 30 days\" is a positive signal (company is ghost) or neutral/missing data is undefined.",
+      "A7 \u2014 Minimum historical window required to compute LinkedIn headcount trend (e.g., 6 months, 1 year) is not specified.",
+      "A8 \u2014 Whether to surface confidence/sample-size context (e.g., \"rating based on 3 reviews\") in the evidence panel is undefined.",
+      "A9 \u2014 Behavior when batch ingest fails for one or more external sources (recompute with partial signals, hold prior state, or error) is undefined.",
+      "A10 \u2014 Validation rules and fallback behavior for malformed or ambiguous Indeed posting timestamps are undefined.",
+      "A11 \u2014 Schema, field names, and data types for Glassdoor, LinkedIn, and Indeed signals in the database are not provided.",
+      "A12 \u2014 APIs, data feeds, or vendor contracts for Glassdoor, LinkedIn, and Indeed are assumed to exist; availability, rate limits, and cost are not documented."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF\n\n\u2022 **Ghost-score architecture exists but is currently deterministic.** The classifier in `sql/features.sql` computes three signals (repost frequency, posting age, cross-board spread) and returns GHOST/REAL with rationale. The ask to add Glassdoor rating, LinkedIn headcount trend, and Indeed posting recency would expand the feature set beyond the current deterministic model. ([C2])\n\n\u2022 **Data ingestion runs on daily batch cadence.** Repost detection latency is up to 24 hours via da",
+  "analyst_spec": "# SCOPED SPEC: Ghost Score Expansion\n\n## IN SCOPE\n- Add three new signals to ghost-score calculation:\n  - Glassdoor rating (company-level aggregate)\n  - LinkedIn headcount trend (historical headcount change over a defined period)\n  - Indeed posting recency (whether company posted a job in the last 30 days: yes/no)\n- Integrate these signals into the existing deterministic classifier in `sql/features.sql`\n- Surface all three new signals as evidence in the UI evidence panel (per GUARDRAILS.md requi",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story names the persona (job seeker), uses plain product language, and clearly states the three signals. However, the 'given' clause in AC1-AC3 awkwardly frames the job seeker as owning the batch pipeline, which is a minor persona-role confusion. The title and story sentence are clear and well-formed overall."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases (missing data, ingest failures, malformed timestamps, insufficient history) are well covered. Some THENs reference unresolved assumptions (e.g., '[fallback behavior to be confirmed per A4]'), which slightly reduces testability since the expected outcome is not fully specified. Still substantially more testable than the reference."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The reference explicitly flags that adding three signals is likely an epic and recommends treating each as a separate spike. The generated story bundles all three signals into a single story with 13 ACs covering ingestion, classification, UI, and multiple edge cases per signal. This is a significant scope expansion beyond what the reference recommends \u2014 it should be split into separate stories or at minimum flagged as an epic. The reference intentionally kept the story generic to allow one signal at a time."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story is exceptionally thorough: 7 edge-case ACs covering missing data per signal, ingest failures, malformed timestamps, insufficient history, and low review counts. 12 assumptions are surfaced covering API availability, weighting, schema, fallback behaviors, and signal semantics. This exceeds the reference in completeness, though at the cost of scope fidelity."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are consistently flagged with A1-A12 prefixes. Unresolved decisions are marked with PLACEHOLDER-style brackets referencing the relevant assumption. The story references existing system components (sql/features.sql, evidence panel, batch pipeline) suggesting grounding in context. One minor issue: A12 states APIs 'are assumed to exist' but the reference explicitly calls these out as spikes that do not exist today \u2014 the generated story understates this risk."
+    }
+  },
+  "rubric_avg": 3.8
+}

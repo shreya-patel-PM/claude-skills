@@ -1,0 +1,164 @@
+{
+  "id": "G08",
+  "ask": "Add dark mode.",
+  "category": "ungrounded",
+  "difficulty": "hard",
+  "mode": "live",
+  "ts": "2026-07-18T17:04:02.626594+00:00",
+  "duration_s": 48.7,
+  "story": {
+    "title": "Dark Mode \u2013 Session-Scoped Theme Toggle",
+    "story": "As a logged-in user, I want to toggle dark mode on or off during my session, so that I can use the application in a dark color scheme that is comfortable for my viewing environment.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Toggle Control Is Visible and Discoverable",
+        "given": "a logged-in user is on any page of the web application",
+        "when": "the page finishes loading",
+        "thens": [
+          "A dark mode toggle control will be visible in the UI at a consistent, discoverable location.",
+          "The toggle will be labeled with a [label to be confirmed by design spec].",
+          "The toggle will reflect the current active theme state (light or dark)."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Activating Dark Mode Applies Dark Palette to All UI Surfaces",
+        "given": "a logged-in user is on any page with the application in light mode",
+        "when": "the user activates the dark mode toggle",
+        "thens": [
+          "The application will immediately apply the predefined dark color palette to all visible UI surfaces including backgrounds, text, borders, and components.",
+          "The toggle will update its visual state to indicate dark mode is active.",
+          "No page reload will be required for the theme change to take effect."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Deactivating Dark Mode Restores Light Palette",
+        "given": "a logged-in user is on any page with the application in dark mode",
+        "when": "the user deactivates the dark mode toggle",
+        "thens": [
+          "The application will immediately restore the light color palette to all visible UI surfaces.",
+          "The toggle will update its visual state to indicate light mode is active.",
+          "No page reload will be required for the theme change to take effect."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Evidence Panel and Score Presentation Remain Clear and Non-Alarmist in Dark Mode",
+        "given": "a logged-in user has activated dark mode and is viewing the evidence panel or score presentation",
+        "when": "the dark palette is applied",
+        "thens": [
+          "The evidence panel will render all verdict text, scores, and sensitivity context with sufficient contrast to remain clearly readable.",
+          "No alarmist red or high-urgency color treatments prohibited by GUARDRAILS.md will appear in the evidence panel or score presentation in dark mode.",
+          "Verdicts will continue to be presented with appropriate sensitivity context and caution language unchanged from light mode."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Dark Mode Meets Accessibility Contrast Standards",
+        "given": "a logged-in user has activated dark mode",
+        "when": "any UI surface is rendered in the dark palette",
+        "thens": [
+          "All text and interactive elements will meet WCAG AA minimum contrast ratio requirements against their dark mode backgrounds.",
+          "Secondary text and disabled state elements will meet the applicable WCAG AA contrast threshold for their text size and weight."
+        ]
+      },
+      {
+        "id": "AC6",
+        "name": "Dark Mode Is Session-Scoped and Defaults to Light on New Session",
+        "given": "a logged-in user has activated dark mode during a session",
+        "when": "the user ends the session and begins a new session",
+        "thens": [
+          "The application will default to light mode at the start of the new session.",
+          "No dark mode preference will be persisted across sessions."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Toggle While Viewing Evidence Panel \u2013 No Disruption to Verdict Presentation",
+        "given": "a logged-in user is actively viewing the evidence panel or score presentation",
+        "when": "the user activates or deactivates the dark mode toggle",
+        "thens": [
+          "The theme will switch without interrupting or resetting the evidence panel state.",
+          "All verdict text, scores, and sensitivity context will remain visible and correctly rendered immediately after the toggle action.",
+          "No alarmist color treatments will appear transiently during the theme transition."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Rapid Toggling Produces No Rendering Glitches or State Inconsistencies",
+        "given": "a logged-in user is on any page of the web application",
+        "when": "the user rapidly and repeatedly activates and deactivates the dark mode toggle",
+        "thens": [
+          "The UI will settle on the palette corresponding to the final toggle state without visual glitches.",
+          "No UI components will be left in a mixed or inconsistent theme state.",
+          "No JavaScript errors or broken layout states will result from rapid toggling."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "Fallback When Browser localStorage Is Unavailable",
+        "given": "a logged-in user is in a browser environment where localStorage is unavailable or blocked",
+        "when": "the user activates the dark mode toggle",
+        "thens": [
+          "The application will apply dark mode for the current session using an in-memory fallback.",
+          "The application will not throw an unhandled error due to the unavailability of localStorage.",
+          "The toggle will function normally for the duration of the session."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Contrast Failure Remediation Path for Specific UI Elements",
+        "given": "a [QA engineer or accessibility reviewer] is auditing the dark mode palette",
+        "when": "a UI element is found to fail WCAG AA contrast thresholds in dark mode",
+        "thens": [
+          "The failing element will be flagged with a documented remediation path before the feature is released.",
+          "A corrected dark mode color value will be applied to the failing element prior to launch.",
+          "The fix will be re-validated against WCAG AA contrast requirements before the feature ships."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Dark mode applies to the web/browser UI only; no mobile app, desktop app, or other client surfaces are in scope.",
+      "A2 \u2014 \"Dark mode\" means a single, predefined dark color palette; not a spectrum of themes or user-customizable colors.",
+      "A3 \u2014 The toggle control persists in the UI and is easily discoverable (location, label, and interaction pattern not specified in ask\u2014flagged for design spec).",
+      "A4 \u2014 Current UI is built with a themeable architecture or can be refactored to support theme switching without major structural changes (no evidence in corpus confirms this).",
+      "A5 \u2014 GUARDRAILS.md principles (calm, non-alarmist design) apply equally to dark mode; no separate or relaxed guidelines for dark context.",
+      "A6 \u2014 Email digest feature (C6 backlog item) is not blocking dark mode launch, but dark mode implementation should not preclude future email styling work."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC6: WHEN contains 'and' \u2014 likely two ACs.",
+      "ACE2: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "# CONTEXT BRIEF: Dark Mode Feature Ask\n\n\u2022 **No existing theme or appearance infrastructure documented.** The corpus contains no references to current color schemes, CSS architecture, theme switching, or user preference storage that would constrain or enable dark mode implementation. ([Corpus review: C1\u2013C6 contain no appearance or theming context])\n\n\u2022 **UI principles emphasize calm, non-alarmist design.** GUARDRAILS.md establishes that the product must avoid alarmist red and present verdicts with",
+  "analyst_spec": "# SCOPED SPEC: Dark Mode\n\n## IN SCOPE\n- Toggle or switch UI control to activate/deactivate dark mode in the current session\n- Dark color palette applied to all visible UI surfaces (backgrounds, text, borders, components)\n- Ensure evidence panel and score presentation remain clear, non-alarmist, and appropriately cautious in dark mode (respecting GUARDRAILS.md principles)\n- Visual contrast and readability validation for dark mode against accessibility standards\n\n## OUT OF SCOPE\n- Persistence of d",
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story uses clear product language and a single-action 'I want' statement. The persona 'logged-in user' is slightly less specific than 'job seeker' from the reference, but still unambiguous. The title 'Session-Scoped Theme Toggle' telegraphs a key design decision (session-only) that arguably belongs in ACs rather than the title, but overall clarity is strong."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC follows GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are thoroughly covered including rapid toggling (ACE2), localStorage unavailability (ACE3), accessibility contrast failures (ACE4), and evidence panel disruption (ACE1). This exceeds the reference in breadth of testable scenarios."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story introduces several elements not present in the original ask or reference: GUARDRAILS.md compliance (AC4, ACE1), WCAG AA accessibility requirements (AC5, ACE4), evidence panel-specific behavior (AC4, ACE1), and a localStorage fallback (ACE3). While some additions are reasonable, the story invents significant domain-specific scope (evidence panel, GUARDRAILS.md) that goes well beyond 'add dark mode' and the reference story. The session-scoped (non-persistent) preference also contradicts the reference's A2 assumption about per-user persistence."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story surfaces more edge cases and assumptions than the reference. It covers toggle visibility, theme application, reversal, persistence behavior, accessibility, and error states. The contradiction with the reference on persistence (session-only vs. per-user) is a notable gap in alignment, but as a standalone story the completeness is high. Assumptions are well-flagged with A-prefixes."
+    },
+    "grounding": {
+      "score": 3,
+      "reasoning": "Several claims reference domain-specific context (GUARDRAILS.md, evidence panel, score presentation) that appears to come from a broader product corpus not visible in the original ask. These are not flagged as PLACEHOLDERs or clearly marked assumptions\u2014they're embedded in ACs as if established facts. A4 correctly flags theming architecture uncertainty. The session-scoped assumption (A1-A6) is reasonable but the GUARDRAILS.md references lack explicit grounding markers, reducing confidence in the story's grounding discipline."
+    }
+  },
+  "rubric_avg": 3.8
+}
