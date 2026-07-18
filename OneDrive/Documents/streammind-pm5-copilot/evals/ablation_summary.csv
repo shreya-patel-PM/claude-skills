@@ -1,0 +1,16 @@
+id,category,crew_avg,single_avg,delta,crew_time,single_time,crew_clarity,single_clarity,crew_testability,single_testability,crew_scope_fidelity,single_scope_fidelity,crew_completeness,single_completeness,crew_grounding,single_grounding
+G01,grounded,4.2,4.4,-0.2,53.7,22.1,4,5,5,4,3,4,5,4,4,5
+G02,grounded,4.2,4.6,-0.4,41.6,19.7,4,5,5,5,3,4,5,5,4,4
+G03,grounded,3.6,4.6,-1.0,51.3,24.0,4,5,4,5,3,4,3,5,4,4
+G04,grounded,3.4,4.8,-1.4,51.0,28.4,4,5,4,5,2,4,4,5,3,5
+G05,partially_grounded,3.0,4.8,-1.8,54.3,22.2,3,5,4,5,2,4,3,5,3,5
+G06,partially_grounded,3.8,4.8,-1.0,42.7,17.7,4,5,4,5,3,4,4,5,4,5
+G07,ungrounded,4.2,3.8,0.4,47.9,22.6,4,4,5,5,3,3,5,4,4,3
+G08,ungrounded,3.8,4.8,-1.0,48.7,20.0,4,5,5,5,3,4,4,5,3,5
+G09,scope_trap,4.0,3.8,0.2,51.5,24.9,4,4,5,5,3,2,4,4,4,4
+G10,scope_trap,3.4,4.0,-0.6,48.6,18.5,3,5,4,4,2,3,4,4,4,4
+G11,adversarial,4.4,2.2,2.2,22.1,20.4,4,2,4,4,5,1,4,2,5,2
+G12,adversarial,3.8,4.4,-0.6,60.3,31.0,4,5,4,5,2,3,5,5,4,4
+G13,grounded,4.0,4.4,-0.4,37.2,18.9,4,4,4,4,3,4,5,5,4,5
+G14,partially_grounded,3.4,4.2,-0.8,70.1,25.8,3,4,4,5,2,3,4,5,4,4
+G15,scope_trap,2.2,3.4,-1.2,60.2,19.5,2,3,3,4,1,2,3,4,2,4

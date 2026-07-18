@@ -1,0 +1,110 @@
+{
+  "id": "G06",
+  "ask": "Job seekers should be able to export their saved jobs as a CSV.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:11:30.959767+00:00",
+  "duration_s": 17.7,
+  "story": {
+    "title": "Saved Jobs Export \u2013 CSV Download",
+    "story": "As a job seeker, I want to export my saved jobs as a CSV file, so that I can manage, filter, and share my job search activity outside of AutoApply.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Export Button Visible on History Page",
+        "given": "a job seeker is on the History page and has at least one saved job",
+        "when": "the job seeker views the History page",
+        "thens": [
+          "An 'Export CSV' button will be visible on the History page.",
+          "The button will be accessible without any additional navigation."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "CSV File Downloaded Successfully",
+        "given": "a job seeker is on the History page and has at least one saved job",
+        "when": "the job seeker clicks the 'Export CSV' button",
+        "thens": [
+          "A CSV file will be downloaded to the job seeker's device.",
+          "The filename will follow the pattern 'saved_jobs_YYYY-MM-DD.csv' using the current date.",
+          "The CSV will include one row per saved job, ordered by saved_at descending."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "CSV Contains Required Columns",
+        "given": "a job seeker has triggered a CSV download",
+        "when": "the CSV file is opened",
+        "thens": [
+          "The CSV will contain a header row with the following columns: Job Title, Company, Location, Job URL, Date Saved.",
+          "Each data row will be populated from the corresponding fields in the saved_jobs table and associated posting data.",
+          "The Date Saved column will be formatted as YYYY-MM-DD."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Empty State \u2014 No Saved Jobs",
+        "given": "a job seeker is on the History page and has no saved jobs",
+        "when": "the job seeker views the History page",
+        "thens": [
+          "The 'Export CSV' button will not be rendered or will be disabled.",
+          "A contextual message will inform the job seeker that there are no saved jobs to export."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Export Failure Handling",
+        "given": "a job seeker clicks the 'Export CSV' button and a server-side error occurs",
+        "when": "the export request fails",
+        "thens": [
+          "No file will be downloaded to the job seeker's device.",
+          "A non-alarmist inline error message will be displayed informing the job seeker that the export could not be completed and suggesting they try again."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The History page is the correct and only surface for the export action; no export from Browse or a dedicated export page is in scope.",
+      "A2 \u2014 All saved jobs are exported; filtering or selecting a subset of jobs for export is out of scope for this story.",
+      "A3 \u2014 The posting data available for CSV columns (Job Title, Company, Location, Job URL) is already retrievable via a join on posting_id in the saved_jobs table; schema confirmation is needed from engineering.",
+      "A4 \u2014 Ghost-score classification data (GHOST/REAL verdict and rationale) is excluded from the CSV export in this slice; inclusion can be a follow-on story.",
+      "A5 \u2014 Export is generated server-side and streamed as a file download; client-side generation is an alternative approach to be decided by engineering.",
+      "A6 \u2014 No authentication beyond the existing session is required to trigger the export; the export is scoped to the authenticated user's own saved jobs only.",
+      "A7 \u2014 Email delivery of the CSV (related to the icebox email digest concept in C6) is explicitly out of scope for this story."
+    ]
+  },
+  "validation": {
+    "errors": [
+      "ACE numbering is not sequential from 1: [4, 5]"
+    ],
+    "warnings": [],
+    "passed": false
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 763,
+  "output_tokens": 977,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "Named persona (job seeker), single-action 'I want', plain product language, clear title. The 'so that' clause is slightly more verbose than the reference but adds legitimate rationale without ambiguity."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs use proper GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases for empty state and error handling are explicitly covered. AC3 separates column schema into its own testable criterion, which is cleaner than the reference. Filename pattern and date format are precisely specified."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "Core scope is preserved and no compound asks are introduced. The generated story adds filename convention, sort order, error handling, and a contextual empty-state message \u2014 these are reasonable extensions but go slightly beyond the original ask. The error handling AC (ACE5) is a meaningful addition not in the reference. Minor scope expansion but nothing that would require splitting."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "Covers all reference ACs plus adds error handling, filename format, sort order, and date formatting. Seven well-labeled assumptions surface dependencies on schema, surface placement, authentication, ghost score exclusion, and generation approach. AC count is appropriate and edge cases are thorough."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All assumptions are explicitly flagged with A1-A7 prefixes. Technical claims (join on posting_id, server-side generation, session authentication) are flagged as needing confirmation. Ghost score exclusion is explicitly called out as a deliberate scoping decision with a follow-on story suggestion. No ungrounded claims presented as facts."
+    }
+  },
+  "rubric_avg": 4.8
+}

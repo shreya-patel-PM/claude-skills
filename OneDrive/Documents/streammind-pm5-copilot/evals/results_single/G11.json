@@ -1,0 +1,107 @@
+{
+  "id": "G11",
+  "ask": "Make it better.",
+  "category": "adversarial",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:13:17.226168+00:00",
+  "duration_s": 20.4,
+  "story": {
+    "title": "Ghost-Score Analysis \u2013 Surface Evidence Panel on Analyze Page",
+    "story": "As a job seeker reviewing a posting on the Analyze page, I want to see the evidence behind a ghost-job score, so that I can judge whether the classification matches my own read of the posting.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Evidence Panel Renders Alongside Score",
+        "given": "a job seeker is on the Analyze page for any posting that has been scored",
+        "when": "the page loads",
+        "thens": [
+          "The GHOST or REAL verdict will be displayed in a non-alarmist style (no red color for GHOST).",
+          "An evidence panel will appear adjacent to the verdict containing the one-sentence rationale returned by the classifier.",
+          "The evidence panel will display the three signal values used in scoring: repost frequency over 90 days, posting age, and cross-board spread.",
+          "Each signal value will be labeled in plain language so its meaning is clear without technical knowledge."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Verdict Framed as Estimate, Not Certainty",
+        "given": "a job seeker is on the Analyze page for any scored posting",
+        "when": "the page loads",
+        "thens": [
+          "The verdict will be accompanied by qualifying language (e.g., 'likely', 'may be') that communicates it is a model estimate.",
+          "No absolute language such as 'This is a ghost job' will appear anywhere on the page."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Sensitivity Context Allows User Disagreement",
+        "given": "a job seeker is viewing the evidence panel on the Analyze page",
+        "when": "the page loads",
+        "thens": [
+          "A sensitivity-context note will be visible explaining that signals are proxies and the model can be wrong.",
+          "The note will invite the user to weigh the evidence themselves rather than defer to the score."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Posting Not Yet Scored",
+        "given": "a job seeker is on the Analyze page for a posting that has no score yet",
+        "when": "the page loads",
+        "thens": [
+          "A placeholder state will be shown in place of the verdict and evidence panel indicating analysis is pending.",
+          "No partial or empty signal values will be rendered."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "One or More Signal Values Missing",
+        "given": "a job seeker is on the Analyze page for a posting whose score exists but one or more signal values are null",
+        "when": "the evidence panel renders",
+        "thens": [
+          "The available signal values will be displayed normally.",
+          "Any missing signal will show a 'Not available' label rather than a blank or zero.",
+          "The verdict and rationale will still be displayed if present."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 'Make it better' is interpreted as the highest-value gap in the current product: the Analyze page shows the ghost score but no supporting evidence, directly violating the GUARDRAILS.md evidence-panel requirement (C2, C5). All other possible improvements are out of scope for this story.",
+      "A2 \u2014 The classifier already returns the three signal values from sql/features.sql alongside the verdict and rationale; they are simply not surfaced in the UI today.",
+      "A3 \u2014 'Calm UI / no alarmist red' is interpreted as: GHOST verdict may use a neutral color (e.g., amber or grey) to be defined by design; this story does not specify the exact color token.",
+      "A4 \u2014 The sensitivity-context copy will be drafted by the PM or content designer; placeholder copy is acceptable for the initial implementation.",
+      "A5 \u2014 No changes to the scoring logic, ingest pipeline, or notifications are in scope for this story (C3, C4, C6 are explicitly deferred)."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 752,
+  "output_tokens": 1007,
+  "rubric_scores": {
+    "clarity": {
+      "score": 2,
+      "reasoning": "The generated story invents a fully specified feature (Ghost-Score Evidence Panel) from a completely ambiguous ask ('Make it better'). While the story itself is internally clear with a named persona and single action, it fundamentally fails clarity by not acknowledging the ambiguity of the original ask. The reference standard requires placeholders and PM clarification prompts, not a fabricated feature. The generated story presents invented scope as if it were confirmed requirements."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "The generated story has well-formed GIVEN/WHEN/THEN acceptance criteria with observable outcomes, edge cases for missing scores and null signal values, and specific behavioral constraints. If the feature were real and confirmed, these ACs would be highly testable. The score is reduced slightly because testability is moot when the underlying feature is ungrounded."
+    },
+    "scope_fidelity": {
+      "score": 1,
+      "reasoning": "The reference story explicitly keeps all fields as PLACEHOLDERs and defers to PM clarification because the ask is undefined. The generated story invents an entirely new feature scope (evidence panel, signal values, verdict framing, sensitivity notes) with no basis in the original ask. This is a fundamental scope invention, not a narrowing or clarification."
+    },
+    "completeness": {
+      "score": 2,
+      "reasoning": "The generated story is internally complete for the feature it invented, with multiple ACs and edge cases. However, it completely omits the most critical completeness requirement from the reference: surfacing that the ask is ambiguous, flagging every field as requiring PM confirmation, and including a review gate AC. The assumptions section attempts to justify the invention but does not substitute for proper ambiguity handling."
+    },
+    "grounding": {
+      "score": 2,
+      "reasoning": "The generated story uses A1-A5 assumption prefixes, which is a positive signal. However, A1 makes an enormous ungrounded leap by interpreting 'Make it better' as a specific GUARDRAILS.md evidence-panel requirement. References to sql/features.sql, C2/C5 constraints, and specific signal names (repost frequency, posting age, cross-board spread) are all unverifiable from the original ask. The reference requires PLACEHOLDER for ungrounded claims; instead the story presents invented context as established fact."
+    }
+  },
+  "rubric_avg": 2.2
+}

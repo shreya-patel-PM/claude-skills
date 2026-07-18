@@ -1,0 +1,108 @@
+{
+  "id": "G02",
+  "ask": "We should show why a job got flagged as ghost.",
+  "category": "grounded",
+  "difficulty": "easy",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:09:58.597919+00:00",
+  "duration_s": 19.7,
+  "story": {
+    "title": "Ghost Classification \u2013 Display Ghost Flag Rationale",
+    "story": "As a job seeker reviewing a flagged posting, I want to see why a job was classified as a ghost, so that I can make an informed decision about whether to invest time applying.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Rationale Displayed on Analyze Page",
+        "given": "a job seeker is viewing the Analyze page for a posting that has been classified as GHOST",
+        "when": "the page finishes loading",
+        "thens": [
+          "The classifier's one-sentence rationale will be displayed beneath the ghost score label.",
+          "The rationale will appear inside an evidence panel visually grouped with the score, not as a standalone alert.",
+          "The rationale text will be rendered in a neutral, non-alarmist style consistent with GUARDRAILS.md (no red color, no certainty language)."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Contributing Signals Listed",
+        "given": "a job seeker is viewing the Analyze page for a GHOST-classified posting",
+        "when": "the evidence panel is visible",
+        "thens": [
+          "Each of the three deterministic signals (repost frequency over 90 days, posting age, cross-board spread) will be listed with its computed value.",
+          "Signals that contributed to the GHOST verdict will be visually distinguished from signals that did not (e.g., label or icon, not color alone).",
+          "Signal values will be presented as factual data points, not as verdicts (e.g., 'Reposted 4 times in 90 days', not 'Suspicious repost count')."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Sensitivity Context Provided",
+        "given": "a job seeker is viewing the evidence panel for a GHOST-classified posting",
+        "when": "the panel is rendered",
+        "thens": [
+          "A brief sensitivity disclaimer will be displayed stating that the classification is a model estimate and may not reflect current posting status.",
+          "The disclaimer will invite the user to use the signals as one input among many."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Rationale Unavailable",
+        "given": "a job seeker is viewing the Analyze page for a GHOST-classified posting whose rationale field is null or empty",
+        "when": "the page finishes loading",
+        "thens": [
+          "The evidence panel will still render with whatever signal values are available.",
+          "A fallback message will appear in place of the rationale (e.g., 'Detailed rationale is not available for this posting.').",
+          "No error state or broken UI will be shown."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "REAL-Classified Posting Shows No Ghost Rationale",
+        "given": "a job seeker is viewing the Analyze page for a posting classified as REAL",
+        "when": "the page finishes loading",
+        "thens": [
+          "No ghost rationale or ghost evidence panel will be displayed.",
+          "The score label will reflect the REAL classification without referencing ghost signals."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The classifier already persists the one-sentence rationale alongside the GHOST/REAL verdict in the database; no changes to the classifier or ingest pipeline are in scope for this story.",
+      "A2 \u2014 The three signals in sql/features.sql are already computed and accessible at read time for the Analyze page; no new backend feature computation is required.",
+      "A3 \u2014 'Evidence panel' is an existing or easily added UI container on the Analyze page; a net-new page or modal is out of scope.",
+      "A4 \u2014 Surfacing rationale for saved jobs on the History page is out of scope for this story and should be treated as a follow-on.",
+      "A5 \u2014 No notification or email delivery of the rationale is in scope; that work depends on notification infrastructure noted as unwired in C4.",
+      "A6 \u2014 The sensitivity disclaimer copy will be finalized by the PM/content designer before implementation; placeholder copy is acceptable in the initial build."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 760,
+  "output_tokens": 1047,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story has a clear persona (job seeker reviewing a flagged posting), a single-action 'I want' statement, and plain product language throughout. The title is descriptive and the purpose is unambiguous."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are explicitly covered (ACE1 for missing rationale, ACE2 for REAL-classified postings). The thens are specific and verifiable (e.g., fallback message text, signal listing format)."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The core ask is well-served. However, AC3 (Sensitivity Context) and the styling/UX constraints in AC1 (neutral color, non-alarmist style referencing GUARDRAILS.md) introduce scope that wasn't in the reference. ACE2 explicitly scopes out REAL verdict evidence panel, which contradicts the reference assumption A1 that evidence shows for both verdicts. This is a meaningful divergence but the overall scope remains reasonable."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story covers more edge cases than the reference (missing rationale, REAL classification behavior), surfaces dependencies clearly (classifier persistence, feature computation, UI container), and includes 6 well-reasoned assumptions covering pipeline, scope boundaries, and content ownership. The reference's 'No history' signal case is covered implicitly through ACE1's 'whatever signal values are available' language."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Most claims are tied to context (sql/features.sql, GUARDRAILS.md, C4 notification infrastructure). Assumptions are properly prefixed A1-A6. However, some specifics like the three named signals and GUARDRAILS.md reference appear grounded in project context not visible in the original ask, which is appropriate but not flagged as assumptions. The reference to 'C4' is unexplained. Minor gaps prevent a perfect score."
+    }
+  },
+  "rubric_avg": 4.6
+}

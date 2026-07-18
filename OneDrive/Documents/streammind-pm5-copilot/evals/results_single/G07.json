@@ -1,0 +1,119 @@
+{
+  "id": "G07",
+  "ask": "We should add a referral program so users can invite friends.",
+  "category": "ungrounded",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:11:53.513222+00:00",
+  "duration_s": 22.6,
+  "story": {
+    "title": "Referral Program \u2013 Generate & Share Referral Link",
+    "story": "As a registered AutoApply user, I want to generate a unique referral link I can share with friends, so that I can invite them to sign up and both parties can receive a defined reward.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Generate Unique Referral Link",
+        "given": "a registered user is on the Referral Program page",
+        "when": "the user clicks 'Get My Referral Link'",
+        "thens": [
+          "A unique referral code scoped to the user's account will be created and persisted if one does not already exist.",
+          "A full shareable URL containing the referral code (e.g. autoapply.app/signup?ref=<code>) will be displayed to the user.",
+          "The same link will be returned on all subsequent visits without generating a new code."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Copy Link to Clipboard",
+        "given": "a registered user is viewing their referral link",
+        "when": "the user clicks the 'Copy Link' button",
+        "thens": [
+          "The full referral URL will be copied to the user's clipboard.",
+          "A transient confirmation message (e.g. 'Link copied!') will appear for at least 2 seconds without navigating away from the page."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Attribute Signup to Referrer",
+        "given": "an anonymous visitor arrives at the signup page with a valid ref query parameter",
+        "when": "the visitor completes registration and verifies their email",
+        "thens": [
+          "The new account will be associated with the referring user's referral code in a referrals table recording referrer_id, referee_id, and referred_at.",
+          "The referral will be marked with status 'pending' until any reward eligibility conditions are confirmed."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Display Referral Count to Referrer",
+        "given": "a registered user is on the Referral Program page",
+        "when": "the page loads",
+        "thens": [
+          "The total number of friends who signed up using the user's referral link will be displayed.",
+          "The count will reflect only referrals whose accounts have completed email verification."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Invalid or Expired Referral Code",
+        "given": "an anonymous visitor arrives at the signup page with a ref query parameter that does not match any known referral code",
+        "when": "the signup page renders",
+        "thens": [
+          "The signup flow will proceed normally without error.",
+          "No referral attribution will be recorded for that session.",
+          "No error message referencing the invalid code will be shown to the visitor."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Self-Referral Prevention",
+        "given": "a registered user is already authenticated and clicks their own referral link",
+        "when": "the referral code is evaluated",
+        "thens": [
+          "No referral record will be created linking the user to themselves.",
+          "The user will be silently redirected to the dashboard without an error state."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Reward type and value (e.g. free trial extension, credit, badge) are not defined in the ask; reward mechanics are out of scope for this story and must be specified in a follow-up story before AC3 'pending' status can be resolved.",
+      "A2 \u2014 Email notification to the referrer when a friend signs up is out of scope for this story; AutoApply has no notification infrastructure today (C4) and that slice should be a separate story dependent on Resend integration.",
+      "A3 \u2014 A dedicated 'Referral Program' page or entry point in the navigation is assumed to exist or will be created as a parallel UI task; this story does not cover navigation or page scaffolding.",
+      "A4 \u2014 Referral codes are assumed to be non-expiring unless a time-limited campaign requirement is introduced later.",
+      "A5 \u2014 Social sharing shortcuts (Twitter, WhatsApp, etc.) are out of scope for this story; copy-to-clipboard is the minimum viable share mechanism.",
+      "A6 \u2014 Fraud prevention rules (e.g. blocking referrals from the same IP or device) are not addressed here and should be a follow-up security story before any monetary reward is paid out."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC3: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 761,
+  "output_tokens": 1140,
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story names a clear persona ('registered AutoApply user'), has a single-action 'I want', and uses plain product language. Minor issue: the benefit clause ('both parties can receive a defined reward') asserts a reward structure that hasn't been confirmed by PM, slightly overreaching compared to the reference's placeholder approach. Otherwise clear and unambiguous."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are well covered (invalid code, self-referral, idempotent link generation, clipboard confirmation timing). This exceeds the reference's minimal AC set significantly."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The original ask was simply 'add a referral program so users can invite friends.' The generated story invents substantial scope not in the ask or reference: backend referral attribution table with specific schema (AC3), referral count dashboard (AC4), self-referral prevention (ACE2), and detailed URL format. The reference deliberately kept scope minimal and flagged unknowns as assumptions. The generated story commits to implementation details that should remain as PM decisions or separate epics."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "Assumptions are well-flagged (A1-A6) covering rewards, notifications, navigation, expiry, social sharing, and fraud. Edge cases for invalid codes and self-referral are covered. The reward mechanics dependency is correctly deferred. Minor gap: no assumption flagging that the 'Referral Program page' UX/navigation is unconfirmed (A3 mentions it but treats it as assumed to exist rather than a PLACEHOLDER)."
+    },
+    "grounding": {
+      "score": 3,
+      "reasoning": "Several claims are asserted without grounding: the specific URL format (autoapply.app/signup?ref=<code>), the referrals table schema (referrer_id, referee_id, referred_at), the 2-second confirmation duration, and the 'pending' status concept. These should be marked PLACEHOLDER or flagged as assumptions rather than stated as facts. The reference model explicitly uses PLACEHOLDER for ungrounded details. The assumptions section does flag some gaps but the AC body presents invented specifics as settled requirements."
+    }
+  },
+  "rubric_avg": 3.8
+}

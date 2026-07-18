@@ -1,0 +1,117 @@
+{
+  "id": "G05",
+  "ask": "We need a way for users to dispute a ghost score they think is wrong.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:11:13.226835+00:00",
+  "duration_s": 22.2,
+  "story": {
+    "title": "Ghost Score Dispute \u2013 Submit a Dispute on a Ghost Classification",
+    "story": "As a job seeker, I want to flag a ghost score I believe is incorrect, so that I can signal my disagreement and help improve the model's accuracy.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Dispute CTA Visible on Analyze Page",
+        "given": "a job seeker is viewing the Analyze page for a posting classified as GHOST",
+        "when": "the ghost score and rationale are rendered",
+        "thens": [
+          "A 'Dispute this score' link or button will be visible beneath the ghost score verdict.",
+          "The CTA will be styled in a calm, non-alarmist manner consistent with GUARDRAILS.md (no red, no urgent language).",
+          "The CTA will not appear for postings classified as REAL."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Dispute Form Displayed",
+        "given": "a job seeker is on the Analyze page for a GHOST-classified posting",
+        "when": "the job seeker clicks 'Dispute this score'",
+        "thens": [
+          "A dispute form will appear inline or in a modal without navigating away from the page.",
+          "The form will include a required reason-selection field with at least the options: 'I applied and received a response', 'I know this role is active', and 'Other'.",
+          "The form will include an optional free-text field (max 500 characters) for additional context.",
+          "The form will display the one-sentence model rationale so the user can reference it while writing their dispute."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Dispute Successfully Submitted",
+        "given": "a job seeker has completed the dispute form with a selected reason",
+        "when": "the job seeker submits the form",
+        "thens": [
+          "A dispute record will be written to a new `ghost_score_disputes` table containing: `posting_id`, `user_id`, `reason_code`, `free_text` (nullable), `submitted_at`, and `status` defaulting to 'pending'.",
+          "A success confirmation message will be displayed to the user acknowledging receipt of the dispute.",
+          "The 'Dispute this score' CTA will be replaced with a 'Dispute submitted' indicator for that posting for the remainder of the session.",
+          "The ghost score verdict displayed on the page will remain unchanged and will not be altered by submission alone."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Duplicate Dispute Prevention",
+        "given": "a job seeker has already submitted a dispute for a specific posting",
+        "when": "the job seeker revisits the Analyze page for that same posting",
+        "thens": [
+          "The 'Dispute this score' CTA will be replaced with a 'Dispute submitted' indicator.",
+          "The dispute form will not be accessible for that posting.",
+          "No duplicate record will be written to `ghost_score_disputes`."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Form Submission Failure",
+        "given": "a job seeker has completed the dispute form",
+        "when": "the form submission fails due to a network or server error",
+        "thens": [
+          "An inline error message will be displayed informing the user that the submission did not go through.",
+          "The form will remain populated with the user's input so they can retry without re-entering data.",
+          "No partial record will be persisted to `ghost_score_disputes`."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Dispute review workflow (human or automated) is out of scope for this story; `status` field is included to support a future review flow but no review UI is built here.",
+      "A2 \u2014 No email confirmation is sent to the user upon dispute submission; notification infrastructure does not yet exist per C4, and adding it is a separate story.",
+      "A3 \u2014 The dispute feature applies only to GHOST-classified postings; disputing a REAL classification is not in scope and is assumed to be a separate backlog item.",
+      "A4 \u2014 Authentication is assumed to be in place; `user_id` is available from the active session when writing the dispute record.",
+      "A5 \u2014 The ghost score displayed to the user will not be dynamically updated as a result of a dispute; any re-scoring logic is a downstream concern outside this story's scope.",
+      "A6 \u2014 The `ghost_score_disputes` table does not yet exist and will need to be created as part of this story's implementation.",
+      "A7 \u2014 Dispute data will be used to retrain or audit the classifier in a future initiative; that pipeline is explicitly out of scope here."
+    ]
+  },
+  "validation": {
+    "errors": [
+      "ACE numbering is not sequential from 1: [4, 5]"
+    ],
+    "warnings": [
+      "AC1: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": false
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 764,
+  "output_tokens": 1186,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story uses clear, plain product language with a named persona (job seeker), a single-action 'I want' statement, and unambiguous AC names. It is at least as clear as the reference, with slightly more detail on UI behavior."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable, future-tense outcomes. The generated story adds two additional edge cases (form submission failure, duplicate on revisit vs. same session) that are more thorough than the reference, making it highly testable."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The generated story stays within the core ask and does not invent unrelated features. However, it adds a free-text field (AC2) which the reference explicitly flags as NOT in scope (A2 says preset list, not free text), and it specifies a concrete database schema (`ghost_score_disputes` table with specific columns), which goes slightly beyond what was asked. These are minor but notable deviations from the reference's intentional constraints."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story covers all reference ACs plus adds error handling (ACE5), revisit-based duplicate prevention (ACE4 vs. same-session only in reference), and seven well-articulated assumptions covering authentication, no email notification, no re-scoring, table creation, and future pipeline. This exceeds the reference in completeness."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All claims are tied to context (GUARDRAILS.md reference, C4 for notification infrastructure, session-based user_id). Assumptions are clearly prefixed A1\u2013A7 and flag ungrounded items (e.g., table doesn't exist yet, review workflow is future). No unsubstantiated claims are made without flagging them as assumptions."
+    }
+  },
+  "rubric_avg": 4.8
+}

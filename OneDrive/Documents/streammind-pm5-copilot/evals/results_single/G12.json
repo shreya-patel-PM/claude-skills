@@ -1,0 +1,133 @@
+{
+  "id": "G12",
+  "ask": "The ghost score should also factor in the company's Glassdoor rating, LinkedIn headcount trend, and whether the company has posted on Indeed in the last 30 days.",
+  "category": "adversarial",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:13:48.191558+00:00",
+  "duration_s": 31.0,
+  "story": {
+    "title": "Ghost Score Enrichment \u2013 Company Health Signals",
+    "story": "As a job seeker reviewing a saved posting, I want the ghost score to incorporate the company's Glassdoor rating, LinkedIn headcount trend, and recent Indeed posting activity, so that I can make a more informed judgment about whether the role is likely real and worth pursuing.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Glassdoor Rating Ingested and Stored",
+        "given": "the daily batch ingest job is running for a posting with a resolvable company entity",
+        "when": "the ingest job processes the posting",
+        "thens": [
+          "The system will fetch the company's current Glassdoor overall rating (numeric, 0.0\u20135.0) from the configured data source.",
+          "The fetched rating will be stored in a company-level enrichment table keyed by company identifier.",
+          "If the rating cannot be resolved, a null value will be stored and the absence will be logged without failing the ingest job."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "LinkedIn Headcount Trend Ingested and Stored",
+        "given": "the daily batch ingest job is running for a posting with a resolvable company entity",
+        "when": "the ingest job processes the posting",
+        "thens": [
+          "The system will fetch the company's LinkedIn headcount trend signal (e.g., growing, stable, shrinking) from the configured data source.",
+          "The fetched trend will be stored in the company-level enrichment table alongside the Glassdoor rating.",
+          "If the trend cannot be resolved, a null value will be stored and the absence will be logged without failing the ingest job."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Indeed Recent Activity Flag Ingested and Stored",
+        "given": "the daily batch ingest job is running for a posting with a resolvable company entity",
+        "when": "the ingest job processes the posting",
+        "thens": [
+          "The system will determine whether the company has posted any job on Indeed within the last 30 calendar days.",
+          "The result will be stored as a boolean flag in the company-level enrichment table.",
+          "If the Indeed activity cannot be determined, a null value will be stored and the absence will be logged without failing the ingest job."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Three New Signals Factored into Ghost Score",
+        "given": "a posting's company-level enrichment record contains at least one non-null value among Glassdoor rating, LinkedIn headcount trend, and Indeed recent activity flag",
+        "when": "the ghost-score classifier runs for that posting",
+        "thens": [
+          "The classifier will incorporate all available non-null company health signals alongside the existing three deterministic signals (repost frequency, posting age, cross-board spread).",
+          "The resulting GHOST or REAL verdict will reflect the combined signal set.",
+          "The one-sentence rationale will reference whichever company health signals materially influenced the verdict.",
+          "Postings where all three new signals are null will continue to be scored using only the existing three signals, with no degradation in availability."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "Company Health Signals Surfaced in Evidence Panel",
+        "given": "a job seeker is viewing the Analyze page for a posting that has at least one non-null company health signal",
+        "when": "the ghost score section renders",
+        "thens": [
+          "The evidence panel will display each available company health signal with its value (e.g., 'Glassdoor: 3.2 / 5.0', 'LinkedIn headcount: Shrinking', 'Indeed activity (last 30 days): Yes').",
+          "Signals with null values will be displayed as 'Unavailable' rather than omitted entirely, so users understand the data gap.",
+          "The display will conform to GUARDRAILS.md: calm UI, no alarmist framing, and a sensitivity note indicating the signals are inputs to a model and not certainties."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Company Entity Cannot Be Resolved for a Posting",
+        "given": "the daily batch ingest job is running for a posting whose company name does not match any entity in the enrichment lookup",
+        "when": "the ingest job attempts to fetch company health signals",
+        "thens": [
+          "All three company health signal fields will be stored as null for that posting.",
+          "The ghost score will be computed using only the existing three deterministic signals.",
+          "The evidence panel will display 'Company data unavailable' for the company health section without surfacing a technical error to the user."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Partial Signal Availability",
+        "given": "a posting's company enrichment record has at least one non-null and at least one null company health signal",
+        "when": "the ghost-score classifier runs",
+        "thens": [
+          "The classifier will use all non-null signals and ignore null signals without substituting default or assumed values.",
+          "The evidence panel will individually label each signal as either its resolved value or 'Unavailable'."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 A licensed or otherwise permissible data source for Glassdoor ratings, LinkedIn headcount trends, and Indeed posting activity exists or will be procured; the specific provider and API contract are out of scope for this story.",
+      "A2 \u2014 Company entity resolution (matching a posting's company name to a canonical company record) is either already implemented or will be delivered as a prerequisite task before this story is built.",
+      "A3 \u2014 The company-level enrichment table does not yet exist and will need to be designed and migrated as part of this story; schema details are left to the implementing engineer.",
+      "A4 \u2014 The weighting or scoring logic for the three new signals within the classifier is a data-science decision deferred to the ML/analytics owner; this story only mandates that the signals are available to and consumed by the classifier.",
+      "A5 \u2014 LinkedIn headcount trend is represented as a discrete categorical value (e.g., growing / stable / shrinking); the exact categories will be confirmed when the data source is selected (see A1).",
+      "A6 \u2014 The ask references three distinct enrichment features; this story covers all three together because they share a single ingestion pattern and a single classifier integration point. If scope must be cut, Glassdoor rating is the highest-priority signal per PM judgment.",
+      "A7 \u2014 Ingest latency for the new signals will match the existing 24-hour batch cadence (C3); real-time enrichment is out of scope."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 785,
+  "output_tokens": 1656,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story names a specific persona ('job seeker reviewing a saved posting'), uses a single-action 'I want' statement, and articulates a clear benefit. Each AC has an unambiguous name and plain product language. Slightly more verbose than the reference but no ambiguity."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC follows strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases (null values, unresolvable company entity, partial signal availability) are each given their own AC with concrete thens. The reference only has two ACs; the generated story has seven, all well-formed and independently verifiable."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The reference explicitly flags that three signals likely constitute an epic and recommends a spike, deliberately keeping the story generic (one signal at a time). The generated story bundles all three signals into a single story with detailed ingestion, storage schema, UI rendering, and classifier integration \u2014 significantly expanding scope beyond what the reference treats as appropriate for a single story. The reference also recommends a spike first; the generated story skips that recommendation entirely."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story surfaces more edge cases than the reference (entity resolution failure, partial availability, null handling, UI display of unavailable signals). Assumptions cover API procurement, entity resolution prerequisite, schema migration, ML weighting deferral, categorical encoding, and batch cadence \u2014 all relevant dependencies. AC count (7) is appropriate given the breadth covered."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are properly prefixed A1\u2013A7 and tied to context (data source procurement, existing batch cadence C3, GUARDRAILS.md reference). The story references 'existing three deterministic signals' and 'Analyze page' as if these are established context, which is reasonable. Minor gap: the reference recommends flagging this as a spike due to unknown API feasibility, which the generated story acknowledges only implicitly in A1 rather than explicitly recommending a spike as a prerequisite."
+    }
+  },
+  "rubric_avg": 4.4
+}

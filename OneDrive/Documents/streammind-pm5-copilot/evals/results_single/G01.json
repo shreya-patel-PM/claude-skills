@@ -1,0 +1,108 @@
+{
+  "id": "G01",
+  "ask": "Users keep missing when their saved jobs get reposted. We should notify them somehow.",
+  "category": "grounded",
+  "difficulty": "easy",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:09:38.860552+00:00",
+  "duration_s": 22.1,
+  "story": {
+    "title": "Repost Alerts \u2013 Notify User When a Saved Job Is Reposted",
+    "story": "As a job seeker with saved jobs, I want to receive an email notification when a saved job posting is detected as reposted, so that I can reassess the role's legitimacy and decide whether to continue pursuing it.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Email Sent After Repost Detected",
+        "given": "a job seeker has at least one saved job in the `saved_jobs` table",
+        "when": "the daily ingest batch flags that saved posting as a repost event",
+        "thens": [
+          "The system will send a transactional email to the user's registered address via Resend within 24 hours of the ingest run completing.",
+          "The email will identify the job title and employer of the reposted listing.",
+          "The email will include a brief, non-alarmist explanation that the posting has been seen before, consistent with calm UI principles."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Email Links Back to Saved Job",
+        "given": "a job seeker has received a repost notification email",
+        "when": "the user clicks the link in the email",
+        "thens": [
+          "The user will be taken to the relevant posting detail or History page entry within AutoApply.",
+          "The ghost-score and its one-sentence rationale will be visible on that page."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "One Notification Per Repost Event Per User",
+        "given": "a job seeker has already been notified about a repost event for a specific saved posting",
+        "when": "the same posting is flagged again in a subsequent ingest run without being unsaved and re-saved",
+        "thens": [
+          "The system will not send a duplicate notification email for that posting to that user.",
+          "A new notification will only be triggered if the user unsaves and re-saves the posting, resetting the notification state."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "User Has No Email Address on File",
+        "given": "a job seeker's account has no verified email address",
+        "when": "a repost event is detected for one of their saved jobs",
+        "thens": [
+          "The system will silently skip sending the notification without throwing an error.",
+          "The repost event will be logged so the notification can be retried or surfaced in-app in a future iteration."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Posting Unsaved Before Ingest Run Completes",
+        "given": "a job seeker unsaves a posting before the daily ingest batch completes",
+        "when": "that posting is flagged as a repost in the same ingest run",
+        "thens": [
+          "The system will not send a repost notification for that posting to that user."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Resend is approved as the email provider for this feature, consistent with its use in PM Agent #4; no additional vendor evaluation is assumed.",
+      "A2 \u2014 A notification-state tracking mechanism (e.g., a `repost_notifications_sent` table keyed on `user_id` + `posting_id` + `repost_event_date`) will need to be created; schema design is left to the developer.",
+      "A3 \u2014 User email addresses are already stored and accessible in the existing auth/user table; no new email-capture flow is in scope.",
+      "A4 \u2014 Notification opt-out or preference management is out of scope for this story; a future story should address unsubscribe compliance (e.g., CAN-SPAM).",
+      "A5 \u2014 The weekly email digest parked in the icebox (C6) is a separate feature and is explicitly excluded from this story.",
+      "A6 \u2014 In-app / push notifications are out of scope; email is the sole channel for this slice.",
+      "A7 \u2014 The ghost-score classifier already runs as part of the daily ingest batch and its output is available at the time repost detection occurs."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC3: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 766,
+  "output_tokens": 1041,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story uses a named persona ('job seeker with saved jobs'), a clear single-action 'I want' statement, and plain product language. The title is descriptive and unambiguous. Slightly more verbose than the reference but no clarity issues."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "Most ACs follow GIVEN/WHEN/THEN structure with observable outcomes. AC1 and ACE2 are well-formed. However, the reference includes a daily cap edge case (AC2) with holdover behavior that the generated story omits entirely, replacing it with a duplicate-suppression AC that addresses a different scenario. The generated AC2 is more of a navigation/UI check than a core notification behavior. Missing the daily cap scenario reduces testability coverage."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The generated story stays within the email notification scope and doesn't invent major out-of-scope features. It adds some implementation detail (Resend provider, table names, schema hints) that edges toward over-specification, but these are flagged as assumptions rather than ACs. The 'calm UI principles' language in AC1 is slightly prescriptive but minor. No compound asks introduced."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story covers more edge cases than the reference (no email on file, unsaved before ingest, duplicate suppression) and has a richer assumptions section. However, it misses the daily notification cap scenario (AC2 in reference) and the posting-deleted-after-detection edge case (ACE2 in reference), which are meaningful gaps. The posting-deleted scenario with skip logging is absent. The additional assumptions (A4 unsubscribe compliance, A5 digest exclusion, A7 ghost-score availability) add useful surfacing of dependencies."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All assumptions are explicitly flagged with A1-A7 prefixes. Claims reference specific system components (Resend, saved_jobs table, daily ingest batch, ghost-score classifier). Unverified assumptions are clearly labeled rather than stated as facts. The story ties back to context (PM Agent #4, icebox item C6) showing grounding in product context. No ungrounded claims presented as facts."
+    }
+  },
+  "rubric_avg": 4.4
+}

@@ -1,0 +1,130 @@
+{
+  "id": "G03",
+  "ask": "Let people snooze a saved job instead of deleting it.",
+  "category": "grounded",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:10:22.642383+00:00",
+  "duration_s": 24.0,
+  "story": {
+    "title": "Saved Jobs \u2013 Snooze a Saved Job",
+    "story": "As a job seeker, I want to snooze a saved job for a chosen duration, so that it is temporarily hidden from my History page without being permanently removed.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Snooze Action Available on Saved Job",
+        "given": "a job seeker is viewing the History page with at least one saved job",
+        "when": "the job seeker opens the action menu for a saved job",
+        "thens": [
+          "A 'Snooze' option will be visible alongside any existing actions.",
+          "The 'Snooze' option will not replace or remove the existing unsave action."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Snooze Duration Selection",
+        "given": "a job seeker has selected 'Snooze' on a saved job",
+        "when": "the snooze picker is displayed",
+        "thens": [
+          "The picker will offer at least three duration options: 1 week, 2 weeks, and 1 month.",
+          "The picker will display the calculated wake date for each option (e.g., 'Until May 28').",
+          "A confirm action will be required before the snooze is applied."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Snoozed Job Hidden from History Page",
+        "given": "a job seeker has confirmed a snooze duration for a saved job",
+        "when": "the History page is loaded or refreshed",
+        "thens": [
+          "The snoozed job will not appear in the default History page listing.",
+          "The job's record in saved_jobs will be retained with a snoozed_until timestamp.",
+          "A passive indicator (e.g., 'X jobs snoozed') will be visible on the History page."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Snoozed Job Automatically Resurfaces",
+        "given": "a saved job has an active snooze with a snoozed_until date",
+        "when": "the current date is equal to or past the snoozed_until date",
+        "thens": [
+          "The job will reappear in the History page listing sorted by its original saved_at date.",
+          "The snoozed_until value will be cleared or nulled on the record.",
+          "No other fields on the saved_jobs record will be modified."
+        ]
+      },
+      {
+        "id": "AC5",
+        "name": "User Can View and Cancel an Active Snooze",
+        "given": "a job seeker is viewing the History page and has toggled the snoozed jobs indicator",
+        "when": "the job seeker opens the action menu for a snoozed job",
+        "thens": [
+          "The remaining snooze duration and wake date will be displayed.",
+          "An 'Unsnooze' action will be available.",
+          "Selecting 'Unsnooze' will immediately restore the job to the default History page listing."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Snooze Applied to a Job That Is Later Unsaved",
+        "given": "a job seeker has an active snooze on a saved job",
+        "when": "the job seeker unsaves that job via any surface",
+        "thens": [
+          "The job will be removed from saved_jobs entirely, including the snoozed_until value.",
+          "The job will not resurface on the History page when the snooze duration expires."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Duplicate Snooze Attempt",
+        "given": "a job seeker has an active snooze on a saved job",
+        "when": "the job seeker selects 'Snooze' on the same job from the snoozed jobs view",
+        "thens": [
+          "The picker will display the current wake date pre-populated.",
+          "Confirming a new duration will overwrite the existing snoozed_until value.",
+          "Only one active snooze per saved job will exist at any time."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The saved_jobs table will be migrated to add a nullable snoozed_until timestamp column; schema migration is in scope for this story.",
+      "A2 \u2014 Snooze expiry is evaluated at page-load time on the client or via a lightweight server-side filter query; no background job or cron is required for the MVP slice.",
+      "A3 \u2014 No push or email notification is sent when a snooze expires, consistent with C4 (no notification infrastructure wired) and to keep scope narrow.",
+      "A4 \u2014 The 'snoozed jobs' view on the History page is a simple toggle/filter, not a separate route; navigation design is left to the implementer.",
+      "A5 \u2014 Custom snooze duration (free date picker) is out of scope for this story and may be addressed in a follow-on.",
+      "A6 \u2014 The weekly email digest parked in the icebox (C6) could surface snooze wake events in future but is explicitly excluded here."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 762,
+  "output_tokens": 1328,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story uses a named persona (job seeker), a single-action 'I want' statement, and plain product language throughout. The title matches the reference exactly. The purpose clause is clear and unambiguous."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC follows a strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. The generated story actually exceeds the reference by adding AC2 (duration picker with wake date display), AC5 (view/cancel snooze), and ACE2 (duplicate snooze attempt), all with concrete, verifiable thens. Edge cases are well-covered."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The core scope is faithfully preserved. The generated story adds some implementation detail (snoozed_until timestamp, sorted by saved_at, passive indicator count) that edges toward technical spec rather than product requirements, and introduces a 'duplicate snooze' edge case not in the reference. These are reasonable extensions but slightly exceed the minimal ask. No harmful scope inflation."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story covers all reference ACs (snooze applied, snooze expires, job closed while snoozed is implicitly missing but compensated by additional edge cases), plus adds unsave-while-snoozed (matching ACE2 reference), duplicate snooze, and view/cancel. Six well-reasoned assumptions are surfaced including schema migration, notification exclusion, and custom duration out-of-scope. The reference's job-closes-while-snoozed edge case (ACE1 in reference) is the only notable gap."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A6 and tied to context (C4, C6 references suggest a product context document). Implementation details like 'saved_jobs table' and 'snoozed_until' are flagged as assumptions rather than stated as facts. The reference to 'History page' as the surface is specific and consistent. Minor concern: C4/C6 references are cited without being defined in the story itself, which could confuse readers without that context."
+    }
+  },
+  "rubric_avg": 4.6
+}

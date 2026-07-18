@@ -1,0 +1,122 @@
+{
+  "id": "G14",
+  "ask": "Let users set up a daily email digest of new postings matching their search criteria.",
+  "category": "partially_grounded",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:14:32.920175+00:00",
+  "duration_s": 25.8,
+  "story": {
+    "title": "Daily Email Digest \u2013 Save Search Criteria & Subscribe to Digest",
+    "story": "As a job seeker, I want to save a set of search criteria and opt in to a daily email digest of new postings matching those criteria, so that I receive relevant opportunities without having to manually re-run searches each day.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Save Search Criteria",
+        "given": "a job seeker is on the Browse page with at least one search filter applied",
+        "when": "the job seeker clicks 'Save Search'",
+        "thens": [
+          "The current filter state (keywords, location, and any other active filters) will be persisted to a new `saved_searches` record linked to the user's account.",
+          "A confirmation message will appear inline confirming the search was saved.",
+          "The saved search will appear in a 'Saved Searches' management list accessible from the user's account settings."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Opt In to Daily Digest for a Saved Search",
+        "given": "a job seeker has at least one saved search in their account",
+        "when": "the job seeker toggles 'Daily Email Digest' to ON for a saved search",
+        "thens": [
+          "The `saved_searches` record will be updated with `digest_enabled = true` and the user's confirmed email address.",
+          "A confirmation email will be sent to the user's address via Resend acknowledging the digest subscription.",
+          "The toggle will reflect the ON state immediately in the UI without a page reload."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Digest Email Delivered with Matching New Postings",
+        "given": "a job seeker has a saved search with digest enabled and new postings matching the criteria were ingested in the prior 24 hours",
+        "when": "the daily digest batch job runs",
+        "thens": [
+          "The job seeker will receive exactly one email per subscribed saved search containing only postings first ingested since the previous digest send.",
+          "Each posting in the email will display the job title, company, location, and a direct link to the posting on AutoApply.",
+          "The email will be sent via Resend using a template consistent with AutoApply's calm UI principles (no alarmist language or styling).",
+          "The email will include a one-click 'Unsubscribe from this digest' link that disables the digest for that saved search without requiring login."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "No New Postings \u2014 Digest Suppressed",
+        "given": "a job seeker has a saved search with digest enabled and no new postings matching the criteria were ingested in the prior 24 hours",
+        "when": "the daily digest batch job runs",
+        "thens": [
+          "No email will be sent to the job seeker for that saved search on that day.",
+          "The `last_digest_sent_at` timestamp on the saved search record will not be updated, preserving the previous send date."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Opt Out via Unsubscribe Link",
+        "given": "a job seeker has received a digest email and clicks the unsubscribe link",
+        "when": "the unsubscribe action is confirmed",
+        "thens": [
+          "The `digest_enabled` flag for that saved search will be set to false.",
+          "The job seeker will be shown a confirmation web page stating the digest has been cancelled.",
+          "No further digest emails will be sent for that saved search unless the job seeker re-enables the toggle."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Duplicate Save Search Prevented",
+        "given": "a job seeker is on the Browse page with a filter state identical to an existing saved search",
+        "when": "the job seeker clicks 'Save Search'",
+        "thens": [
+          "The system will detect the duplicate and will not create a new record.",
+          "An inline message will inform the job seeker that this search is already saved and offer a link to manage it."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Resend is the email delivery provider, consistent with its use in PM Agent #4; no alternative provider evaluation is in scope for this story.",
+      "A2 \u2014 'New postings' means postings with an ingest timestamp within the 24-hour window prior to the digest job run; exact deduplication logic across digest windows is a backend implementation detail to be confirmed by engineering.",
+      "A3 \u2014 The digest batch job run time (e.g., 07:00 UTC) is a deployment configuration decision outside this story's scope.",
+      "A4 \u2014 Users have a verified email address already stored on their account; email verification flow is out of scope here.",
+      "A5 \u2014 Search criteria fields available for saving (keywords, location, etc.) match whatever filters currently exist on the Browse page; no new filter types are introduced by this story.",
+      "A6 \u2014 The icebox 'weekly summary of saved-job activity' (C6) is a distinct feature and is explicitly out of scope; this story covers criteria-based digests only.",
+      "A7 \u2014 Ghost-score data (C2) is not included in digest email content in this slice; surfacing scores in the digest is a future enhancement.",
+      "A8 \u2014 A user may have multiple saved searches, each with its own independent digest toggle; per-user digest frequency controls (e.g., batching all searches into one email) are out of scope."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 765,
+  "output_tokens": 1384,
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story is clear and uses plain product language with a named persona. The 'I want' is slightly compound (save criteria AND opt in to digest), which the reference avoids by assuming saved searches as a prerequisite. Otherwise well-written and unambiguous."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases like no new postings, unsubscribe, and duplicate saves are covered with specific, testable conditions. Exceeds the reference in breadth of coverage."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The generated story expands scope significantly by including the 'Save Search' feature (AC1, ACE2) as part of this story, whereas the reference treats saved searches as a prerequisite separate story (A1). This introduces a compound story that the reference deliberately avoids. The unsubscribe flow and duplicate detection are reasonable additions, but the save-search UI work is invented scope relative to the original ask."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "Comprehensive coverage of edge cases: no-match suppression, unsubscribe, duplicate prevention, multiple saved searches, email provider, batch job timing, verified email assumption, and distinction from the icebox feature. Assumptions are well-flagged and numerous. Exceeds the reference in assumption surfacing."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Claims are tied to context with A1-A8 prefixes. Resend is correctly identified as the email provider. The ghost score exclusion (A7) and icebox distinction (A6) show good contextual awareness. A8 notes the multiple-search behavior but diverges from the reference's ACE1 which consolidates into one email \u2014 this is an unresolved design difference that should be flagged more explicitly rather than treating separate emails per search as assumed."
+    }
+  },
+  "rubric_avg": 4.2
+}

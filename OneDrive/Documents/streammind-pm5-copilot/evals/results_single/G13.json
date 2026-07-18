@@ -1,0 +1,98 @@
+{
+  "id": "G13",
+  "ask": "The Analyze page should show when the posting was first seen.",
+  "category": "grounded",
+  "difficulty": "easy",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:14:07.122711+00:00",
+  "duration_s": 18.9,
+  "story": {
+    "title": "Analyze Page \u2013 Display First-Seen Date for Job Posting",
+    "story": "As a job seeker reviewing a posting on the Analyze page, I want to see when the posting was first detected, so that I can judge how long the role has been on the market and weigh that context alongside the ghost-score verdict.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "First-Seen Date Renders on Analyze Page",
+        "given": "a job seeker is viewing the Analyze page for any saved posting",
+        "when": "the Analyze page loads",
+        "thens": [
+          "A 'First seen' label and its corresponding date will be displayed in the evidence panel alongside the ghost-score.",
+          "The date will be formatted as a human-readable string (e.g., 'May 12, 2025').",
+          "The value will be sourced from the earliest ingest timestamp recorded for that posting_id."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "First-Seen Date Is Distinct from Saved Date",
+        "given": "a job seeker is viewing the Analyze page for a posting they saved after it was first ingested",
+        "when": "the Analyze page loads",
+        "thens": [
+          "The 'First seen' date will reflect the earliest ingest timestamp, not the user's saved_at timestamp.",
+          "The two dates will not be conflated or displayed as the same field."
+        ]
+      },
+      {
+        "id": "ACE3",
+        "name": "First-Seen Date Unavailable",
+        "given": "a job seeker is viewing the Analyze page for a posting whose ingest timestamp is missing or null",
+        "when": "the Analyze page loads",
+        "thens": [
+          "The 'First seen' field will display a neutral placeholder such as 'Date unavailable' rather than an empty or broken value.",
+          "The rest of the Analyze page will continue to render normally without error."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Posting First Seen Today (Same-Day Ingest)",
+        "given": "a job seeker is viewing the Analyze page for a posting whose earliest ingest timestamp is the current calendar day",
+        "when": "the Analyze page loads",
+        "thens": [
+          "The 'First seen' field will display 'Today' or the current date in the standard format, consistent with the calm UI guidelines.",
+          "No alarmist or urgency-implying language will accompany the date."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The earliest ingest timestamp for a posting is stored or derivable from an existing table (e.g., an `ingested_at` column on a postings or ingest-events table). Schema confirmation is required from engineering before implementation.",
+      "A2 \u2014 'First seen' means first detected by AutoApply's ingest pipeline, not the date the posting appeared on an external job board; if the external publish date is also available and preferred, that is a separate product decision.",
+      "A3 \u2014 The evidence panel referenced in GUARDRAILS.md (C5) is the intended placement for this field; final visual placement is subject to design review.",
+      "A4 \u2014 Ingest runs as a daily batch (C3), so 'first seen' carries up-to-24-hour detection latency; no real-time accuracy guarantee is implied in the UI copy.",
+      "A5 \u2014 Date localisation and timezone display rules (e.g., user's local time vs. UTC) are not specified in the feature ask and will need a product decision before implementation.",
+      "A6 \u2014 This story covers display only; any downstream use of first-seen date in ghost-score computation or filtering is out of scope."
+    ]
+  },
+  "validation": {
+    "errors": [
+      "ACE numbering is not sequential from 1: [3, 4]"
+    ],
+    "warnings": [],
+    "passed": false
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 761,
+  "output_tokens": 935,
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story has a clear persona, single-action intent, and named placement. The story sentence is slightly verbose ('weigh that context alongside the ghost-score verdict') but remains unambiguous. Minor over-specification in the story sentence itself, but overall clear."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable outcomes. AC2 adds a useful disambiguation edge case. ACE3 and ACE4 cover additional edge cases. The reference uses relative date formatting with hover for absolute date, which the generated story misses (it uses absolute date format only), a minor but notable gap in testability of the display format."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The generated story stays within the ask and explicitly calls out that ghost-score computation is out of scope (A6). AC2 adds a reasonable clarification about saved_at vs ingest timestamp. ACE4 (same-day edge case) is a minor addition but not unreasonable. No significant scope creep detected."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story covers more edge cases than the reference (unknown/null date, same-day ingest, saved-date disambiguation) and surfaces more assumptions (A1-A6) including timezone, latency, and placement. The reference's 'First tracked' fallback is approximated by ACE3's placeholder approach. Overall more thorough than the reference."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All assumptions are explicitly flagged with A1-A6 prefixes. Claims reference specific context (GUARDRAILS.md C5, ingest pipeline C3, posting_id). Unresolved decisions are flagged as requiring engineering or product confirmation. No ungrounded claims are presented as facts."
+    }
+  },
+  "rubric_avg": 4.4
+}

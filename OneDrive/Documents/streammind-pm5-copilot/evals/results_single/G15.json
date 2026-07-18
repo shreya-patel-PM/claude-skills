@@ -1,0 +1,112 @@
+{
+  "id": "G15",
+  "ask": "We need to track which jobs users apply to and whether they hear back.",
+  "category": "scope_trap",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:14:52.454609+00:00",
+  "duration_s": 19.5,
+  "story": {
+    "title": "Application Tracker \u2013 Log Application & Awaiting Response Status",
+    "story": "As a job seeker, I want to mark a saved job as applied and later record whether I received a response, so that I can track the real-world outcome of each application in one place.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Mark a Saved Job as Applied",
+        "given": "a job seeker is viewing a saved job on the History page",
+        "when": "the user clicks 'Mark as Applied'",
+        "thens": [
+          "The saved job's status will be updated to 'Applied' in the database.",
+          "An applied_at timestamp will be recorded on the record.",
+          "The History page will display an 'Applied' badge on that job card.",
+          "The 'Mark as Applied' button will be replaced with response-status controls."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Record a Response Received",
+        "given": "a job seeker is viewing a saved job with status 'Applied' on the History page",
+        "when": "the user selects a response status from the available options (e.g., 'Heard Back', 'No Response')",
+        "thens": [
+          "The job's response status will be persisted to the database.",
+          "A responded_at timestamp will be recorded on the record.",
+          "The History page will display the selected response status label on that job card.",
+          "The response status will remain editable so the user can update it later."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Applied Jobs Visible in History",
+        "given": "a job seeker has at least one job marked as Applied",
+        "when": "the user loads the History page",
+        "thens": [
+          "All saved jobs will be listed regardless of application status.",
+          "Each job card will display its current status ('Saved', 'Applied', or the recorded response status).",
+          "Jobs will remain sorted by saved_at by default."
+        ]
+      },
+      {
+        "id": "ACE4",
+        "name": "Unsaving an Applied Job",
+        "given": "a job seeker has a saved job with status 'Applied'",
+        "when": "the user unsaves the job",
+        "thens": [
+          "The job will be removed from the History page.",
+          "The application status and timestamps will be soft-deleted or retained in the database per the data-retention assumption (see A3)."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Applying to the Same Posting Twice",
+        "given": "a job seeker has already marked a job as Applied",
+        "when": "the user attempts to click 'Mark as Applied' again",
+        "thens": [
+          "The system will not create a duplicate application record.",
+          "The existing Applied status and applied_at timestamp will be preserved unchanged."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The feature requires a schema change to saved_jobs (or a new application_tracking table) to add status, applied_at, response_status, and responded_at columns; the exact migration approach is left to engineering.",
+      "A2 \u2014 Response status options are limited to a fixed enum (e.g., 'Heard Back', 'No Response', 'Interviewing', 'Offer Received', 'Rejected') for MVP; free-text notes are out of scope for this story.",
+      "A3 \u2014 Data-retention behavior when a job is unsaved (hard delete vs. soft delete of application data) requires a product decision before ACE4 can be fully implemented.",
+      "A4 \u2014 Notification or email digest triggered by application status changes (e.g., reminders to follow up) is explicitly out of scope for this story and is noted in the icebox (C6).",
+      "A5 \u2014 Analytics or aggregate reporting on application outcomes (e.g., response-rate dashboard) is a separate story and not addressed here.",
+      "A6 \u2014 The feature ask mentions tracking multiple concerns (logging applications AND hearing back); this story covers both as the smallest coherent slice, but they can be split into separate sprints if needed."
+    ]
+  },
+  "validation": {
+    "errors": [
+      "ACE numbering is not sequential from 1: [4, 5]"
+    ],
+    "warnings": [],
+    "passed": false
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 763,
+  "output_tokens": 1040,
+  "rubric_scores": {
+    "clarity": {
+      "score": 3,
+      "reasoning": "The persona and action are clear, but the story combines two distinct actions ('mark as applied' and 'record whether I received a response') into a single compound story. The reference deliberately scopes to one action. The title and story sentence are readable but the compound nature reduces clarity and violates single-action principle."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases for duplicate application and unsaving are covered. The response-status controls in AC1's THEN are somewhat vague ('response-status controls'). Overall testability is good with minor gaps."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The reference explicitly calls out that response tracking ('did they hear back') is a separate story scoped out. The generated story includes full response tracking (AC2, responded_at, response status enum) as in-scope, directly contradicting the reference's scoping decision. This is a significant scope expansion that the reference story intentionally avoided."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story surfaces more edge cases (unsaving, duplicates, history visibility) and more assumptions than the reference. It flags schema dependencies, data retention decisions, and out-of-scope items. The assumption about splitting stories (A6) acknowledges the compound scope. Slightly over-engineered for a single story but comprehensive."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A6 with rationale. Schema dependencies are flagged. Data retention decision is surfaced as requiring product input. No ungrounded claims. The response status enum options are flagged as an assumption rather than stated as fact. Minor issue: references 'C6 icebox' which is an unverified external reference (PLACEHOLDER-worthy) but minor."
+    }
+  },
+  "rubric_avg": 3.4
+}

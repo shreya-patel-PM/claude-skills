@@ -1,0 +1,109 @@
+{
+  "id": "G08",
+  "ask": "Add dark mode.",
+  "category": "ungrounded",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:12:13.471582+00:00",
+  "duration_s": 20.0,
+  "story": {
+    "title": "Dark Mode \u2013 User-Controlled Theme Preference",
+    "story": "As a logged-in AutoApply user, I want to switch the app to dark mode, so that I can comfortably use the product in low-light environments without eye strain.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Toggle Dark Mode On",
+        "given": "a logged-in user is on any page of AutoApply with the system or app theme currently set to light mode",
+        "when": "the user activates the dark mode toggle in the settings or header UI control",
+        "thens": [
+          "The entire app UI will switch to a dark color scheme immediately without a full page reload.",
+          "All text, backgrounds, icons, and interactive elements on the Browse, History, and Analyze pages will render with dark-mode-appropriate contrast ratios meeting WCAG AA (4.5:1 minimum).",
+          "The toggle will reflect the active 'dark' state visually."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Toggle Dark Mode Off",
+        "given": "a logged-in user is on any page of AutoApply with dark mode currently active",
+        "when": "the user deactivates the dark mode toggle",
+        "thens": [
+          "The entire app UI will revert to the light color scheme immediately without a full page reload.",
+          "The toggle will reflect the active 'light' state visually."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Preference Persisted Across Sessions",
+        "given": "a logged-in user who has previously set a theme preference",
+        "when": "the user logs out and logs back in, or closes and reopens the browser tab",
+        "thens": [
+          "The app will load in the user's last saved theme preference without requiring the user to re-select it.",
+          "The toggle will reflect the correct persisted state on load."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Respect System-Level Dark Mode Preference for New Users",
+        "given": "a user who has never set a theme preference in AutoApply and whose OS or browser reports a 'prefers-color-scheme: dark' media query",
+        "when": "the user loads any AutoApply page",
+        "thens": [
+          "The app will default to dark mode automatically.",
+          "The toggle will reflect the 'dark' state without the user having taken any action."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Calm UI Preserved in Dark Mode",
+        "given": "a logged-in user with dark mode active who is viewing the Analyze page",
+        "when": "the ghost-score classification result is displayed",
+        "thens": [
+          "The dark mode color palette will not introduce alarmist red or high-saturation warning colors inconsistent with GUARDRAILS.md calm UI principles.",
+          "The evidence panel and sensitivity context will remain fully legible and visually distinct from the score verdict."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 A single toggle control (not a three-way light/dark/system selector) is sufficient for the initial slice; a system-sync option can be a follow-on.",
+      "A2 \u2014 Theme preference will be persisted server-side tied to the user account (not only localStorage), so it roams across devices; if only client-side persistence is feasible in the current stack, that must be flagged as a limitation before implementation.",
+      "A3 \u2014 The dark mode color palette and design tokens are to be defined by design before engineering begins; this story does not specify exact hex values.",
+      "A4 \u2014 The toggle placement (settings page vs. persistent header control) is to be decided by design; this story is agnostic to exact placement.",
+      "A5 \u2014 Only the AutoApply web app is in scope; no native mobile shell exists today.",
+      "A6 \u2014 Email digest and notification features (C4, C6) are out of scope for this story and do not need dark-mode email templates at this time."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [
+      "AC3: WHEN contains 'and' \u2014 likely two ACs.",
+      "ACE1: GIVEN uses a bare role ('user'/'admin') \u2014 name the specific persona."
+    ],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 752,
+  "output_tokens": 1009,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "Named persona ('logged-in AutoApply user'), single-action 'I want to switch the app to dark mode', clear benefit stated. Slightly more verbose than reference but unambiguous and well-structured."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Covers toggle on, toggle off, persistence, system preference detection, and UI calm principles. Edge cases are more thoroughly covered than the reference."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "Core scope is well-preserved. ACE1 (system-level prefers-color-scheme) and ACE2 (calm UI in dark mode) go slightly beyond the original ask but are reasonable extensions rather than compound asks. The WCAG AA contrast ratio requirement and specific page names (Browse, History, Analyze) add some scope not in the reference, though these are defensible product decisions."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "Six assumptions surfaced with A1-A6 prefixes covering design tokens, persistence strategy, placement, device scope, and out-of-scope items. Edge cases include system preference, toggle-off, and UI consistency. Exceeds the reference's three assumptions and three ACs with well-reasoned additions."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All assumptions are flagged with A-prefixes. References to GUARDRAILS.md calm UI principles, specific app pages, and WCAG AA standards are tied to context. The tension between server-side vs. client-side persistence is explicitly flagged as a risk. No ungrounded claims; PLACEHOLDER appropriately absent since context is sufficient."
+    }
+  },
+  "rubric_avg": 4.8
+}

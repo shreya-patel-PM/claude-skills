@@ -1,0 +1,120 @@
+{
+  "id": "G04",
+  "ask": "The Browse page needs a way to filter out likely ghost jobs.",
+  "category": "grounded",
+  "difficulty": "medium",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:10:51.004302+00:00",
+  "duration_s": 28.4,
+  "story": {
+    "title": "Ghost Job Filter \u2013 Browse Page Filter Toggle",
+    "story": "As a job seeker browsing the Browse page, I want to toggle a filter that hides likely ghost jobs, so that I can focus my time on postings the classifier considers real.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Filter Toggle Visible on Browse Page",
+        "given": "a job seeker is on the Browse page with at least one posting displayed",
+        "when": "the page loads",
+        "thens": [
+          "A 'Hide likely ghost jobs' toggle control will be visible in the filter bar.",
+          "The toggle will default to the OFF (inactive) state so all postings are shown by default.",
+          "The toggle label will use non-alarmist language consistent with GUARDRAILS.md (e.g., 'Hide likely ghost jobs' rather than 'Remove fake jobs')."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Activating the Filter Hides GHOST-Classified Postings",
+        "given": "a job seeker is on the Browse page with the ghost-job filter toggle in the OFF state",
+        "when": "the job seeker switches the toggle to ON",
+        "thens": [
+          "All postings whose classifier verdict is GHOST will be removed from the visible results list without a full page reload.",
+          "A non-alarmist inline notice will appear stating approximately how many postings were hidden (e.g., '12 postings hidden \u2014 likely ghost jobs').",
+          "Postings whose classifier verdict is REAL or whose verdict is not yet available will remain visible."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Deactivating the Filter Restores All Postings",
+        "given": "a job seeker is on the Browse page with the ghost-job filter toggle in the ON state",
+        "when": "the job seeker switches the toggle to OFF",
+        "thens": [
+          "All previously hidden GHOST-classified postings will be restored to the results list.",
+          "The inline hidden-count notice will be dismissed.",
+          "No other filter state or sort order will be altered."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Filter State Persists Within Session",
+        "given": "a job seeker has activated the ghost-job filter toggle and navigates away from the Browse page",
+        "when": "the job seeker returns to the Browse page within the same browser session",
+        "thens": [
+          "The toggle will remain in the ON state.",
+          "The results list will reflect the filtered view without requiring the user to re-enable the toggle."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Postings Without a Classifier Score Are Not Hidden",
+        "given": "a job seeker has the ghost-job filter toggle in the ON state and one or more postings have no classifier verdict yet (e.g., ingested within the last 24 hours)",
+        "when": "the Browse page renders the results list",
+        "thens": [
+          "Postings with no classifier verdict will remain visible and will not be treated as GHOST.",
+          "Each unscored posting will display a subtle indicator (e.g., 'Score pending') so the user understands the verdict is not yet available."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "All Visible Postings Are Ghost-Classified",
+        "given": "a job seeker has the ghost-job filter toggle in the ON state and every posting in the current result set is classified as GHOST",
+        "when": "the filter is applied",
+        "thens": [
+          "An empty-state message will be displayed explaining that all results were hidden by the ghost-job filter.",
+          "The message will include a prompt to turn off the filter to see all postings.",
+          "No error state or alarming language will be used."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 The ghost-score classifier verdict (GHOST or REAL) is already stored and queryable per posting at Browse-page render time; this story does not cover backfilling scores or changing the classifier pipeline.",
+      "A2 \u2014 The Browse page already fetches or can cheaply join the classifier verdict from the existing data layer described in C2; no new classifier API endpoint is required for this story.",
+      "A3 \u2014 Filter state persistence is scoped to browser session storage only; cross-device or account-level preference persistence is out of scope for this slice.",
+      "A4 \u2014 The one-sentence classifier rationale (C2) is NOT surfaced inline on the Browse page by this story; displaying rationale is treated as a separate feature (likely on a posting detail view).",
+      "A5 \u2014 'Likely ghost job' wording is a placeholder; final copy must be reviewed against GUARDRAILS.md before release to ensure verdicts are not presented as certainties.",
+      "A6 \u2014 No email or notification functionality (C4, C6) is in scope for this story.",
+      "A7 \u2014 The filter applies only to the Browse page; the History / Saved Jobs page behavior is out of scope for this slice."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 761,
+  "output_tokens": 1269,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story uses a named persona (job seeker), a clear single-action 'I want' statement, and plain product language throughout. The title is slightly verbose but unambiguous. All ACs use consistent, readable language."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "Every AC follows a strict GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases (unscored postings, all results filtered, deactivation) are explicitly covered with concrete, verifiable thens. The generated story actually exceeds the reference by adding AC3 (deactivation) and ACE1 (unscored postings)."
+    },
+    "scope_fidelity": {
+      "score": 4,
+      "reasoning": "The story stays within the core ask and doesn't invent unrelated scope. However, it adds AC3 (explicit deactivation behavior) and ACE1 (unscored postings indicator) which are reasonable extensions but go slightly beyond the reference. The 'Score pending' indicator in ACE1 is a minor scope addition not in the reference. The assumptions section explicitly calls out what is out of scope, which is good practice."
+    },
+    "completeness": {
+      "score": 5,
+      "reasoning": "The generated story covers more edge cases than the reference (deactivation, unscored postings, session persistence, empty state). Seven well-reasoned assumptions are surfaced with A1-A7 prefixes. Dependencies on the classifier data layer, copy review, and out-of-scope features are all explicitly flagged. AC count (6) is appropriate and justified."
+    },
+    "grounding": {
+      "score": 5,
+      "reasoning": "All claims are tied to context with explicit assumption flags (A1-A7). References to GUARDRAILS.md, C2 data layer, and classifier pipeline show grounding in actual project context. Unverified copy decisions are flagged as placeholders requiring review. No ungrounded assertions are made without flagging them as assumptions."
+    }
+  },
+  "rubric_avg": 4.8
+}

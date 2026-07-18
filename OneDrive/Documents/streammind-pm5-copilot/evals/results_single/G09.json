@@ -1,0 +1,129 @@
+{
+  "id": "G09",
+  "ask": "Users should be able to save jobs and get notified when similar ones appear.",
+  "category": "scope_trap",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:12:38.349071+00:00",
+  "duration_s": 24.9,
+  "story": {
+    "title": "Job Alerts \u2013 Save Job and Receive Similar-Job Notifications",
+    "story": "As a job seeker, I want to save a job posting so that I am notified when similar postings appear.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Save a Job Posting from Browse Page",
+        "given": "a job seeker is viewing the Browse page and is authenticated",
+        "when": "the job seeker clicks the Save button on a job posting",
+        "thens": [
+          "A record will be inserted into the `saved_jobs` table with the correct `posting_id` and a `saved_at` timestamp.",
+          "The Save button will visually toggle to a Saved state on the posting card.",
+          "The posting will appear at the top of the job seeker's History page, sorted by `saved_at` descending."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Prompt for Notification Opt-In on First Save",
+        "given": "a job seeker has no existing notification preference on file",
+        "when": "the job seeker saves their first job posting",
+        "thens": [
+          "A non-blocking prompt will appear asking the job seeker to enter an email address and opt in to similar-job notifications.",
+          "The prompt will not block or delay the save action from completing.",
+          "If the job seeker dismisses the prompt, the save will persist and no notification preference will be stored."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Store Notification Preference",
+        "given": "a job seeker is presented with the notification opt-in prompt",
+        "when": "the job seeker submits a valid email address and confirms opt-in",
+        "thens": [
+          "The email address and opt-in consent will be persisted against the job seeker's account.",
+          "A confirmation message will be displayed stating that the job seeker will be notified when similar jobs appear.",
+          "No email will be sent at this point."
+        ]
+      },
+      {
+        "id": "AC4",
+        "name": "Trigger Similar-Job Notification After Ingest",
+        "given": "a job seeker has at least one saved posting and has opted in to notifications",
+        "when": "the daily ingest batch completes and a newly ingested posting is classified as similar to a saved posting",
+        "thens": [
+          "An email notification will be sent to the job seeker's stored address via Resend within one hour of ingest completion.",
+          "The email will include the title, company, and a direct link to the new posting.",
+          "The email will include a one-line similarity rationale so the job seeker understands why the match was surfaced.",
+          "The email will not describe the match as a certainty and will use hedged language consistent with GUARDRAILS.md (e.g., 'may be relevant').",
+          "No more than one notification email per saved posting per 24-hour ingest cycle will be sent."
+        ]
+      },
+      {
+        "id": "ACE5",
+        "name": "Unsave a Job Stops Future Notifications for That Posting",
+        "given": "a job seeker has a saved posting with notifications opted in",
+        "when": "the job seeker unsaves the posting",
+        "thens": [
+          "The `saved_jobs` record will be removed or marked inactive.",
+          "No further similar-job notifications referencing that posting will be sent.",
+          "Notifications already in-flight for that posting will not be retroactively cancelled."
+        ]
+      },
+      {
+        "id": "ACE6",
+        "name": "Invalid or Undeliverable Email Address",
+        "given": "a job seeker submits an email address during opt-in",
+        "when": "the submitted email address fails format validation",
+        "thens": [
+          "An inline validation error will be displayed without submitting the form.",
+          "The save action will remain completed regardless of the validation failure.",
+          "No notification preference will be stored until a valid email is submitted."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Similarity matching logic (e.g., same role title, skills overlap, or job-category tagging) does not yet exist; this story assumes a similarity definition will be specified and built as a prerequisite or parallel ticket before AC4 can be implemented.",
+      "A2 \u2014 A notification preferences table or column does not currently exist in the schema; a migration to store email address and opt-in consent will be required.",
+      "A3 \u2014 Resend is adopted as the email provider for this feature, consistent with its use in PM Agent #4; no alternative provider evaluation is in scope.",
+      "A4 \u2014 The weekly email digest parked in the icebox (C6) is explicitly out of scope for this story; this story covers only event-driven per-save notifications.",
+      "A5 \u2014 Authentication and account identity are assumed to be in place; anonymous saving is out of scope.",
+      "A6 \u2014 The definition of 'similar' is assumed to be determined by the engineering team based on available posting metadata; this story does not prescribe the algorithm.",
+      "A7 \u2014 Notification frequency capping (one email per posting per cycle) is a default assumption; product may choose to adjust this cap in a follow-on story."
+    ]
+  },
+  "validation": {
+    "errors": [
+      "ACE numbering is not sequential from 1: [5, 6]"
+    ],
+    "warnings": [
+      "AC3: WHEN contains 'and' \u2014 likely two ACs.",
+      "AC4: WHEN contains 'and' \u2014 likely two ACs."
+    ],
+    "passed": false
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 764,
+  "output_tokens": 1297,
+  "rubric_scores": {
+    "clarity": {
+      "score": 4,
+      "reasoning": "The generated story uses clear, plain language with a named persona (job seeker) and single-action framing. However, the title 'Save Job and Receive Similar-Job Notifications' suggests a compound story, and the reference explicitly scoped this to alerts only (saving already exists). The generated story conflates two capabilities in one story, which slightly reduces clarity of intent."
+    },
+    "testability": {
+      "score": 5,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable, future-tense outcomes. Edge cases are well covered (unsave stops notifications, invalid email, no-similar-jobs implied by opt-in flow). The thens are specific and measurable, including database-level assertions, UI state changes, and email content requirements. This meets or exceeds the reference."
+    },
+    "scope_fidelity": {
+      "score": 2,
+      "reasoning": "The reference story explicitly scopes to the alert capability only, noting 'Saving already exists (C1); this story covers the alert capability only.' The generated story invents substantial scope around saving mechanics (AC1: save button, database record, history page), opt-in prompts (AC2, AC3), and unsave behavior (ACE5) that were not in the original ask and contradict the reference's explicit assumption that saving is pre-existing. This is a significant scope expansion."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story covers more edge cases than the reference (invalid email, unsave behavior, opt-in flow, frequency capping). Assumptions are well-surfaced with A1-A7 prefixes. The 'no similar jobs found = no email' case from the reference is implicitly covered but not explicitly stated as an AC. The dependency on similarity algorithm is flagged. Overall very thorough, though the extra scope inflates completeness artificially."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Most claims are tied to context with assumptions flagged using A-prefixes. References to Resend (A3), GUARDRAILS.md hedged language, and batch ingest cadence show contextual grounding. A2 flags the missing schema. However, some assumptions (A4 referencing C6 icebox, A5 referencing authentication) reference context not provided in the original ask without PLACEHOLDER markers, and the opt-in prompt design is invented without grounding."
+    }
+  },
+  "rubric_avg": 3.8
+}

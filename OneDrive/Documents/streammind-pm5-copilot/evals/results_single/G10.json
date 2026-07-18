@@ -1,0 +1,106 @@
+{
+  "id": "G10",
+  "ask": "Build a dashboard that shows analytics, trends, ghost score distribution, and application success rates.",
+  "category": "scope_trap",
+  "difficulty": "hard",
+  "mode": "single-call",
+  "ts": "2026-07-18T18:12:56.836528+00:00",
+  "duration_s": 18.5,
+  "story": {
+    "title": "Analytics Dashboard \u2013 Ghost Score Distribution Widget",
+    "story": "As a job seeker, I want to view a distribution chart of ghost scores across my saved jobs, so that I can quickly understand how many of my saved postings are likely real versus likely ghost opportunities.",
+    "acs": [
+      {
+        "id": "AC1",
+        "name": "Ghost Score Distribution Chart Renders",
+        "given": "a job seeker has at least one saved job with a computed ghost score in the saved_jobs table",
+        "when": "the job seeker navigates to the Analytics Dashboard",
+        "thens": [
+          "A chart will be displayed showing the count of saved jobs classified as GHOST versus REAL.",
+          "Each segment of the chart will be labeled with its classification name and the corresponding job count.",
+          "The chart will use calm, non-alarmist colors consistent with GUARDRAILS.md (no alarmist red for GHOST)."
+        ]
+      },
+      {
+        "id": "AC2",
+        "name": "Distribution Reflects Current Saved Jobs Only",
+        "given": "a job seeker is authenticated and has a mix of saved and previously unsaved jobs",
+        "when": "the Analytics Dashboard ghost score distribution widget loads",
+        "thens": [
+          "Only jobs currently present in the saved_jobs table will be included in the distribution count.",
+          "Jobs that have been unsaved will not appear in the distribution totals."
+        ]
+      },
+      {
+        "id": "AC3",
+        "name": "Classification Presented with Uncertainty Context",
+        "given": "a job seeker is viewing the ghost score distribution chart",
+        "when": "the chart is fully rendered",
+        "thens": [
+          "A brief disclaimer will be visible near the chart stating that classifications are model estimates, not certainties.",
+          "The UI will not use language that presents GHOST or REAL verdicts as definitive facts."
+        ]
+      },
+      {
+        "id": "ACE1",
+        "name": "Empty State When No Scored Jobs Exist",
+        "given": "a job seeker has no saved jobs or none of their saved jobs have a computed ghost score",
+        "when": "the job seeker navigates to the Analytics Dashboard",
+        "thens": [
+          "An empty state message will be displayed in place of the chart explaining that no scored jobs are available yet.",
+          "A prompt or link will be shown directing the user to the Browse or Analyze page to save and score jobs."
+        ]
+      },
+      {
+        "id": "ACE2",
+        "name": "Stale Score Latency Disclosure",
+        "given": "a job seeker is viewing the ghost score distribution chart",
+        "when": "the chart is fully rendered",
+        "thens": [
+          "A note will be visible indicating that scores are updated via daily batch and may be up to 24 hours old.",
+          "The timestamp of the most recent score refresh will be displayed if available."
+        ]
+      }
+    ],
+    "assumptions_carried": [
+      "A1 \u2014 Trends over time, application success rates, and general analytics widgets mentioned in the feature ask are out of scope for this story; this story covers only the ghost score distribution widget as the smallest deliverable slice.",
+      "A2 \u2014 The ghost score (GHOST or REAL) is already computed and stored per posting via the classifier described in C2; this story does not require changes to the classifier or features.sql.",
+      "A3 \u2014 The Analytics Dashboard page is a new route/page to be created; its navigation entry point and overall layout are assumed to be defined separately.",
+      "A4 \u2014 Authentication and session management are assumed to be handled by existing infrastructure; this story does not address login flows.",
+      "A5 \u2014 The specific chart type (e.g., pie, donut, bar) is left to design discretion provided it meets GUARDRAILS.md calm-UI principles.",
+      "A6 \u2014 No email or notification functionality is included in this story; the icebox email digest (C6) remains out of scope."
+    ]
+  },
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "passed": true
+  },
+  "researcher_brief": "(single-call mode \u2014 no Researcher)",
+  "analyst_spec": "(single-call mode \u2014 no Analyst)",
+  "input_tokens": 766,
+  "output_tokens": 966,
+  "rubric_scores": {
+    "clarity": {
+      "score": 5,
+      "reasoning": "The generated story has a clear persona (job seeker), a single-action 'I want' statement, and unambiguous product language. The title is descriptive and the story purpose is well-articulated. Slightly more verbose than the reference but equally clear."
+    },
+    "testability": {
+      "score": 4,
+      "reasoning": "All ACs follow GIVEN/WHEN/THEN structure with observable outcomes. Edge cases are covered (empty state, stale scores). However, the generated story uses binary GHOST/REAL classification rather than the reference's score buckets (0-20, 21-40, etc.), which changes the testable behavior. AC3 and ACE2 add UI/disclaimer requirements that are testable but introduce scope beyond the reference. Overall structure is strong."
+    },
+    "scope_fidelity": {
+      "score": 3,
+      "reasoning": "The story correctly narrows to ghost score distribution only and explicitly defers trends/analytics/success rates. However, it introduces several elements not in the reference: a binary GHOST/REAL chart instead of score buckets, a disclaimer about model uncertainty (AC3), a stale score latency disclosure (ACE2), and color/GUARDRAILS.md requirements. These additions expand scope beyond what was asked, though they don't compound the original ask into multiple features."
+    },
+    "completeness": {
+      "score": 4,
+      "reasoning": "The generated story covers the happy path, empty state, and adds edge cases for stale data and uncertainty context. Six assumptions are surfaced and flagged. Dependencies on existing infrastructure are noted. The AC count (5) is higher than the reference (2) but the additions are reasoned. The main gap is that the score bucket grouping from the reference is replaced with binary classification, which may be an incomplete representation of the distribution concept."
+    },
+    "grounding": {
+      "score": 4,
+      "reasoning": "Assumptions are clearly labeled A1-A6. References to specific artifacts (saved_jobs table, GUARDRAILS.md, C2 classifier, features.sql, C6 email digest) show grounding in context. The GUARDRAILS.md reference and daily batch scoring assumption (ACE2) appear to be drawn from project context. No PLACEHOLDERs are used where they might be needed for the batch timing claim (24 hours), which is stated as fact rather than flagged as an assumption."
+    }
+  },
+  "rubric_avg": 4.0
+}
